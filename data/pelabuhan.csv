@@ -1,0 +1,34 @@
+kode,nama,kota,negara,jenis,lat,lon
+IDBLW,Pelabuhan Belawan,Medan,Indonesia,pelabuhan,3.7833,98.6833
+IDKTJ,Pelabuhan Kuala Tanjung,Batu Bara,Indonesia,pelabuhan,3.3700,99.4500
+IDDUM,Pelabuhan Dumai,Dumai,Indonesia,pelabuhan,1.6833,101.4500
+IDSBG,Pelabuhan Sabang,Sabang,Indonesia,pelabuhan,5.8933,95.3214
+IDLSW,Pelabuhan Krueng Geukueh,Lhokseumawe,Indonesia,pelabuhan,5.2400,97.0400
+IDMLG,Pelabuhan Malahayati,Aceh Besar,Indonesia,pelabuhan,5.5967,95.5172
+IDBTM,Pelabuhan Batu Ampar,Batam,Indonesia,pelabuhan,1.1700,104.0100
+IDTBK,Pelabuhan Tanjung Balai Karimun,Karimun,Indonesia,pelabuhan,1.0000,103.4300
+IDTNJ,Pelabuhan Sri Bintan Pura,Tanjung Pinang,Indonesia,pelabuhan,0.9200,104.4500
+IDTJU,Pelabuhan Tanjung Uban,Bintan,Indonesia,pelabuhan,1.0667,104.2167
+IDTAB,Pelabuhan Teluk Nibung,Tanjung Balai Asahan,Indonesia,pelabuhan,2.9800,99.8100
+IDPKU,Pelabuhan Sungai Pakning,Bengkalis,Indonesia,pelabuhan,1.3700,102.1500
+SGSIN,Port of Singapore (Pasir Panjang),Singapura,Singapura,pelabuhan,1.2700,103.7600
+SGJUR,Jurong Port,Singapura,Singapura,pelabuhan,1.3100,103.7100
+MYPKG,Port Klang,Klang,Malaysia,pelabuhan,3.0000,101.3900
+MYTPP,Port of Tanjung Pelepas,Johor,Malaysia,pelabuhan,1.3600,103.5500
+MYPGU,Pelabuhan Pasir Gudang,Johor Bahru,Malaysia,pelabuhan,1.4500,103.8800
+MYPEN,Penang Port,George Town,Malaysia,pelabuhan,5.4200,100.3500
+MYMLK,Pelabuhan Malaka,Malaka,Malaysia,pelabuhan,2.1900,102.2500
+MYPDI,Port Dickson,Port Dickson,Malaysia,pelabuhan,2.5200,101.8000
+MYLUM,Lumut Port,Lumut,Malaysia,pelabuhan,4.2300,100.6300
+MYLGK,Pelabuhan Kuah Langkawi,Langkawi,Malaysia,pelabuhan,6.3100,99.8500
+MYKUA,Pelabuhan Kuantan,Kuantan,Malaysia,pelabuhan,3.9700,103.4300
+THSAT,Pelabuhan Satun,Satun,Thailand,pelabuhan,6.6200,100.0700
+LAN1,Lantamal I Belawan,Medan,Indonesia,pangkalan_al,3.7817,98.6963
+LAN4,Lantamal IV Batam,Batam,Indonesia,pangkalan_al,1.0456,104.0305
+KOAR1,Koarmada I Tanjung Pinang,Tanjung Pinang,Indonesia,pangkalan_al,0.9186,104.4650
+LNLSBG,Lanal Sabang,Sabang,Indonesia,pangkalan_al,5.8800,95.3200
+LNLDUM,Lanal Dumai,Dumai,Indonesia,pangkalan_al,1.6700,101.4400
+LNLLSW,Lanal Lhokseumawe,Lhokseumawe,Indonesia,pangkalan_al,5.2200,97.0500
+LNLTBK,Lanal Tanjung Balai Karimun,Karimun,Indonesia,pangkalan_al,0.9900,103.4400
+CHANGI,Changi Naval Base,Singapura,Singapura,pangkalan_al,1.3200,104.0200
+TLDM,Pangkalan TLDM Lumut,Lumut,Malaysia,pangkalan_al,4.2360,100.6300

@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.streamlit/secrets.toml
+.venv/
+venv/
+.DS_Store
+Thumbs.db
+data/sample/*.jsonl
