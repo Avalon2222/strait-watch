@@ -128,9 +128,9 @@ with st.sidebar:
 
     sumber_pilihan = st.radio(
         "Data source",
-        ["Live (aisstream.io)", "Offline sample"],
-        help="Live mendengarkan aliran AIS aisstream.io selama beberapa detik (perlu kunci API gratis). "
-             "Sampel offline adalah rekaman yang disertakan dalam repositori.",
+        ["Offline sample", "Live (aisstream.io)"],
+        help="Sampel offline adalah rekaman 45 menit yang disertakan dalam repositori. "
+             "Live mendengarkan aliran AIS aisstream.io selama beberapa detik (perlu kunci API gratis).",
     )
     ada_kunci = bool(ais.ambil_api_key())
     if sumber_pilihan.startswith("Live") and not ada_kunci:
