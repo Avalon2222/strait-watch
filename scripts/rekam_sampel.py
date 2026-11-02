@@ -26,6 +26,7 @@ DIR_SAMPEL = Path(__file__).resolve().parent.parent / "data" / "sample"
 
 
 def rekam(api_key: str, durasi: int, interval: int, keluaran: Path = DIR_SAMPEL) -> tuple[pd.DataFrame, pd.DataFrame]:
+    from websockets.exceptions import WebSocketException
     from websockets.sync.client import connect
 
     keluaran.mkdir(parents=True, exist_ok=True)
@@ -33,29 +34,35 @@ def rekam(api_key: str, durasi: int, interval: int, keluaran: Path = DIR_SAMPEL)
     statis: dict[str, dict] = {}
     mulai = time.time()
     jumlah = 0
-    with connect(ais.URL_STREAM, compression="deflate", open_timeout=15) as ws:
-        ws.send(json.dumps(ais.pesan_langganan(api_key)))
-        while time.time() - mulai < durasi:
-            try:
-                mentah = ws.recv(timeout=5)
-            except TimeoutError:
-                continue
-            pesan = json.loads(mentah)
-            if "error" in pesan and "MessageType" not in pesan:
-                raise SystemExit(f"aisstream.io menolak: {pesan['error']}")
-            hasil = ais.urai_pesan(pesan)
-            jumlah += 1
-            if hasil is None:
-                continue
-            jenis, baris = hasil
-            if jenis == "statis":
-                statis[baris["mmsi"]] = baris
-                continue
-            bucket = int((time.time() - mulai) // interval)
-            baris["waktu_snapshot"] = datetime.fromtimestamp(mulai + bucket * interval, tz=timezone.utc).replace(microsecond=0)
-            posisi[(baris["mmsi"], bucket)] = baris
-            if jumlah % 2000 == 0:
-                print(f"  {jumlah:,} pesan, {len({k[0] for k in posisi})} kapal, {len(statis)} data statis", flush=True)
+    while time.time() - mulai < durasi:
+        try:
+            with connect(ais.URL_STREAM, compression="deflate", open_timeout=15) as ws:
+                ws.send(json.dumps(ais.pesan_langganan(api_key)))
+                while time.time() - mulai < durasi:
+                    try:
+                        mentah = ws.recv(timeout=5)
+                    except TimeoutError:
+                        continue
+                    pesan = json.loads(mentah)
+                    if "error" in pesan and "MessageType" not in pesan:
+                        raise SystemExit(f"aisstream.io menolak: {pesan['error']}")
+                    hasil = ais.urai_pesan(pesan)
+                    jumlah += 1
+                    if hasil is None:
+                        continue
+                    jenis, baris = hasil
+                    if jenis == "statis":
+                        statis[baris["mmsi"]] = baris
+                        continue
+                    bucket = int((time.time() - mulai) // interval)
+                    baris["waktu_snapshot"] = datetime.fromtimestamp(mulai + bucket * interval, tz=timezone.utc).replace(microsecond=0)
+                    posisi[(baris["mmsi"], bucket)] = baris
+                    if jumlah % 200 == 0:
+                        print(f"  {jumlah:,} pesan, {len({k[0] for k in posisi})} kapal, {len(statis)} data statis", flush=True)
+        except (WebSocketException, OSError) as exc:
+            # Koneksi panjang kadang diputus server; sambung ulang dan lanjutkan rekaman.
+            print(f"  koneksi terputus ({type(exc).__name__}), menyambung ulang...", flush=True)
+            time.sleep(3)
 
     df_pos = pd.DataFrame(list(posisi.values()))
     df_pos = df_pos[df_pos["lat"].between(ais.BBOX_SELAT["lamin"], ais.BBOX_SELAT["lamax"])

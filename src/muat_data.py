@@ -87,6 +87,20 @@ def snapshot_terakhir(df: pd.DataFrame) -> pd.DataFrame:
     return df[df["waktu_snapshot"] == t].reset_index(drop=True)
 
 
+def posisi_terakhir(df: pd.DataFrame, menit: float | None = None) -> pd.DataFrame:
+    """Posisi terakhir setiap kapal (MMSI) dalam rekaman, opsional hanya yang terlihat ``menit`` terakhir.
+
+    Pada sumber dengan penerima jarang, satu snapshot 20-60 detik hanya menangkap sebagian kecil kapal.
+    "Posisi terakhir per kapal" selama beberapa menit memberi gambaran yang jauh lebih utuh.
+    """
+    if df.empty:
+        return df
+    d = df
+    if menit is not None:
+        d = d[d["waktu_snapshot"] >= d["waktu_snapshot"].max() - pd.Timedelta(minutes=menit)]
+    return d.sort_values("waktu_snapshot").drop_duplicates("mmsi", keep="last").reset_index(drop=True)
+
+
 def muat_live(api_key: str, durasi: int = ais.DURASI_DEFAULT, cache_statis: dict | None = None) -> tuple[pd.DataFrame, int]:
     """Satu snapshot live: dengarkan aliran selama ``durasi`` detik lalu rapikan ke DataFrame."""
     posisi, statis, jumlah = ais.kumpulkan(api_key, durasi=durasi, cache_statis=cache_statis)
@@ -109,3 +123,23 @@ def muat_live_atau_sampel(api_key: str | None, durasi: int = ais.DURASI_DEFAULT,
         return df, "live", f"Data live aisstream.io: {len(df)} kapal dari {jumlah:,} pesan dalam {durasi} detik."
     except ais.AisError as exc:
         return snapshot_terakhir(muat_sampel()), "sampel", f"{exc} Menampilkan sampel offline."
+
+
+FILE_PORTWATCH = DIR_DATA / "portwatch_harian.csv"
+FILE_PORTWATCH_RINGKAS = DIR_DATA / "portwatch_chokepoint.csv"
+
+
+def muat_portwatch(path: Path = FILE_PORTWATCH) -> pd.DataFrame:
+    """Transit harian IMF PortWatch (snapshot di repo, diperbarui mingguan oleh GitHub Actions)."""
+    from src import portwatch
+
+    if not Path(path).exists():
+        return pd.DataFrame(columns=portwatch.KOLOM)
+    return portwatch.rapikan(pd.read_csv(path))
+
+
+def muat_portwatch_ringkas(path: Path = FILE_PORTWATCH_RINGKAS) -> pd.DataFrame:
+    """Ringkasan setahun 28 chokepoint dunia dari basis data PortWatch."""
+    if not Path(path).exists():
+        return pd.DataFrame()
+    return pd.read_csv(path)

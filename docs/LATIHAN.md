@@ -223,3 +223,19 @@ def peta_kapal(df, pelabuhan=None, titik_kunci=None, pusat=PUSAT_SELAT, zoom=ZOO
 ```
 Di `app.py`: `cluster = st.checkbox("Cluster markers", value=len(terkini_f) > 1500)`. Ikon yang berputar hilang saat ter-cluster (digantikan angka), tetapi muncul kembali saat diperbesar.
 </details>
+
+---
+
+### Latihan 11 — Menambah Selat Balabac ke data transit ⭐⭐
+
+PortWatch juga menghitung **Balabac Strait** (`chokepoint25`), jalur antara Kalimantan utara dan Palawan yang dipakai
+kapal yang menghindari Laut Cina Selatan bagian tengah. Tambahkan ke kamus `SELAT` di `src/portwatch.py` sebagai
+pembanding, jalankan `python scripts/perbarui_portwatch.py`, dan lihat apakah ia muncul di halaman Strait traffic.
+
+<details><summary>Petunjuk</summary>
+Format entri: <code>"chokepoint25": {"nama": "Selat Balabac", "grup": "Pembanding", "alki": "-"}</code>. Tes <code>test_snapshot_repo_valid</code> memeriksa bahwa setiap <code>portid</code> di CSV ada di kamus <code>SELAT</code>.
+</details>
+
+<details><summary>Kunci</summary>
+Satu baris di kamus sudah cukup karena <code>ambil_harian</code> mengulang semua kunci <code>SELAT</code>. Pikirkan juga: mengapa lebih baik data diunduh lewat skrip dan disimpan sebagai CSV daripada diambil langsung setiap kali aplikasi dibuka?
+</details>

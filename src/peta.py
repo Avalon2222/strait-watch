@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import math
 
 import folium
 import pandas as pd
@@ -186,3 +187,25 @@ def peta_heatmap(jejak: pd.DataFrame, pelabuhan: pd.DataFrame | None = None, tit
         fg.add_to(m)
     folium.LayerControl(collapsed=True).add_to(m)
     return m
+
+
+
+def pusat_dan_zoom(df: pd.DataFrame, lebar_px: int = 900, tinggi_px: int = 560,
+                   min_rentang: float = 0.4) -> tuple[tuple[float, float], int]:
+    """Pusat dan level zoom agar sebagian besar kapal (kuantil 10-90%) pas di peta.
+
+    Leaflet memakai tile 256 piksel: pada zoom z seluruh dunia selebar 256·2^z piksel, sehingga rentang
+    ``r`` derajat bujur muat di ``lebar_px`` piksel bila 2^z ≤ lebar_px·360 / (256·r).
+    Kapal di luar bingkai tetap ada di peta dan terlihat saat diperkecil. Tanpa data, kembali ke tampilan seluruh selat.
+    """
+    if df.empty or df["lat"].dropna().empty:
+        return PUSAT_SELAT, ZOOM_AWAL
+    lat, lon = df["lat"].dropna(), df["lon"].dropna()
+    la0, la1 = lat.quantile(0.10), lat.quantile(0.90)
+    lo0, lo1 = lon.quantile(0.10), lon.quantile(0.90)
+    r_lat = max(la1 - la0, min_rentang) * 1.25
+    r_lon = max(lo1 - lo0, min_rentang) * 1.25
+    z_lon = math.log2(lebar_px * 360 / (256 * r_lon))
+    z_lat = math.log2(tinggi_px * 180 / (256 * r_lat))  # dekat khatulistiwa, cukup akurat
+    zoom = int(max(5, min(11, math.floor(min(z_lon, z_lat)))))
+    return (float((la0 + la1) / 2), float((lo0 + lo1) / 2)), zoom

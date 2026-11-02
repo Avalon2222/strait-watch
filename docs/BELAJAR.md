@@ -206,7 +206,32 @@ Kunci `(mmsi, bucket)` membuat pesan dalam satu menit saling menimpa, sehingga 1
 pesan) menyusut menjadi puluhan ribu baris yang muat di repositori. Data statis disimpan terpisah karena berlaku untuk
 seluruh rekaman, bukan per snapshot.
 
-## 12. Membaca hasilnya dengan jujur
+## 12. Sumber kedua: AIS satelit dari IMF PortWatch (`src/portwatch.py`)
+
+Setelah beberapa kali mendengarkan aliran, terlihat masalahnya: penerima aisstream.io di Selat Malaka sangat sedikit,
+sehingga yang tertangkap hanya kapal di sekitar Singapura. Ini pelajaran penting dalam proyek data: **periksa cakupan
+sumber sebelum menarik kesimpulan**. Cara memeriksanya sederhana: dengarkan seluruh dunia selama 15 detik, lalu hitung
+berapa persen pesan yang berasal dari kotak selat.
+
+Solusinya bukan mengganti sumber, melainkan menambah sumber yang melengkapi. IMF PortWatch menghitung **transit
+harian** dari AIS satelit sejak 2019 dan membukanya lewat ArcGIS REST API. Dua hal teknis yang menarik:
+
+- **Paginasi.** Server hanya mengembalikan 1.000 baris per permintaan dan memberi tanda `exceededTransferLimit`
+  bila masih ada sisa. `ambil_harian` meminta halaman berikutnya dengan `resultOffset` sampai tanda itu hilang.
+- **Server yang rewel.** Sebagian permintaan ditolak secara acak ("Invalid URL"), dan permintaan yang berisi spasi atau
+  `orderByFields` lebih sering ditolak. Karena itu klausa `where` ditulis tanpa spasi (`portid='chokepoint5'`),
+  pengurutan dilakukan di pandas, dan halaman yang gagal dimasukkan ke antrean putaran berikutnya tanpa mengulang
+  halaman yang sudah berhasil.
+
+Data ini disimpan sebagai CSV di repositori dan diperbarui setiap Senin oleh GitHub Actions, sehingga aplikasi tidak
+perlu menunggu server PortWatch setiap kali dibuka.
+
+**Hari yang tidak biasa** dicari dengan z-score terhadap 28 hari sebelumnya (`portwatch.anomali`). Perhatikan
+`shift(1)`: tanpa itu hari yang diuji ikut membentuk rata-rata pembandingnya sendiri dan lonjakan tampak lebih kecil.
+Deret yang benar-benar konstan memiliki simpangan baku nol; z-score-nya menjadi NaN atau tak hingga, dan tes
+`test_anomali_menemukan_lonjakan` memastikan kasus ini tidak menghasilkan anomali palsu.
+
+## 13. Membaca hasilnya dengan jujur
 
 Beberapa hal yang perlu diingat saat menafsirkan peta:
 
@@ -220,6 +245,7 @@ Beberapa hal yang perlu diingat saat menafsirkan peta:
 ## Bacaan lanjutan
 
 - aisstream.io, dokumentasi API: https://aisstream.io/documentation
+- IMF PortWatch, metodologi chokepoint: https://portwatch.imf.org
 - ITU-R M.1371 (format pesan AIS) dan ITU-R M.585 (MID): https://www.itu.int/rec/R-REC-M.1371 dan https://www.itu.int/rec/R-REC-M.585
 - Dokumentasi `websockets` (klien sinkron): https://websockets.readthedocs.io
 - Folium DivIcon dan HeatMap: https://python-visualization.github.io/folium/

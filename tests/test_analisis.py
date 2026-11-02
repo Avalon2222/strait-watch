@@ -119,3 +119,15 @@ def test_panjang_jejak(kapal, pelabuhan):
 def test_di_dalam_kotak():
     df = pd.DataFrame({"lat": [1.0, 20.0], "lon": [100.0, 100.0], "mmsi": ["1", "2"]})
     assert list(analisis.di_dalam_kotak(df)["mmsi"]) == ["1"]
+
+
+
+def test_pusat_dan_zoom():
+    from src import peta
+    df = pd.DataFrame({"lat": [1.2, 1.3, 1.25], "lon": [103.7, 103.9, 103.8]})
+    (la, lo), z = peta.pusat_dan_zoom(df)
+    assert 1.2 < la < 1.3 and 103.7 < lo < 103.9
+    assert 8 <= z <= 11  # kawasan Singapura: dekat
+    seluruh = pd.DataFrame({"lat": [5.8, 1.2], "lon": [95.3, 104.0]})
+    assert peta.pusat_dan_zoom(seluruh)[1] < z  # seluruh selat: lebih jauh
+    assert peta.pusat_dan_zoom(df.iloc[0:0]) == (peta.PUSAT_SELAT, peta.ZOOM_AWAL)

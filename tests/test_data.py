@@ -36,3 +36,13 @@ def test_sampel_offline_bisa_dimuat():
 def test_live_tanpa_kunci_jatuh_ke_sampel():
     df, sumber, pesan = muat_data.muat_live_atau_sampel(None)
     assert sumber == "sampel" and not df.empty and "Kunci API" in pesan
+
+
+def test_posisi_terakhir():
+    import pandas as pd
+    t0 = pd.Timestamp("2026-11-02 10:00", tz="UTC")
+    df = pd.DataFrame({"mmsi": ["1", "1", "2", "3"], "lat": [1.0, 1.1, 2.0, 3.0], "lon": [100.0] * 4,
+                       "waktu_snapshot": [t0, t0 + pd.Timedelta(minutes=5), t0, t0 - pd.Timedelta(hours=1)]})
+    akhir = muat_data.posisi_terakhir(df).set_index("mmsi")
+    assert len(akhir) == 3 and akhir.loc["1", "lat"] == 1.1
+    assert set(muat_data.posisi_terakhir(df, menit=30)["mmsi"]) == {"1", "2"}

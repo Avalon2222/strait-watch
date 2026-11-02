@@ -28,6 +28,21 @@ bujur 181. Nama dan tujuan dibersihkan dari karakter pengisi `@` dan spasi.
   diberi label "Tidak diketahui". Aplikasi menyimpan data statis antar snapshot dalam satu sesi.
 - **Kapal berlabuh melapor tiap 3 menit**, sehingga pada pendengaran singkat sebagian kapal berlabuh belum tampil.
 
+## 1b. Transit harian: IMF PortWatch
+
+| Hal | Keterangan |
+|---|---|
+| Sumber | [IMF PortWatch](https://portwatch.imf.org) (International Monetary Fund dan University of Oxford), layanan ArcGIS `Daily_Chokepoints_Data` dan `PortWatch_chokepoints_database` |
+| Data dasar | AIS satelit dan darat yang diolah PortWatch menjadi jumlah kapal yang melintasi garis batas setiap chokepoint per hari, dipecah per jenis (tanker, kontainer, curah kering, kargo umum, Ro-Ro) beserta kapasitas (DWT) |
+| Selat | Malaka, Sunda (ALKI I), Lombok dan Makassar (ALKI II), Ombai (ALKI III), serta Hormuz, Suez, Taiwan sebagai pembanding |
+| Rentang | 1 Januari 2019 sampai data terakhir yang diterbitkan (biasanya tertinggal beberapa hari) |
+| Akses | tanpa kunci; server kadang menolak permintaan secara acak ("Invalid URL"), sehingga `src/portwatch.py` mengulang setiap halaman yang gagal |
+| Pembaruan | `scripts/perbarui_portwatch.py`, dijalankan otomatis setiap Senin oleh GitHub Actions |
+
+**Keterbatasan:** hanya kapal niaga yang dikelompokkan PortWatch (kapal ikan, penumpang, dan kapal kecil tidak masuk
+hitungan), transit dihitung saat kapal melintasi garis batas sehingga kapal yang berlabuh di dalam selat tidak terhitung,
+dan angka beberapa hari terakhir dapat direvisi oleh PortWatch.
+
 ## 2. Sampel offline: `data/sample/`
 
 | File | Isi |
@@ -67,4 +82,4 @@ dipilih sendiri untuk pantauan radius, bukan batas resmi.
 
 Seluruh data berasal dari sumber publik dan disajikan untuk tujuan edukasi dan portofolio. Data ini **bukan** data
 operasional pelayaran dan tidak boleh dipakai untuk navigasi, pengawasan, atau keputusan keselamatan. Proyek ini tidak
-berafiliasi dengan aisstream.io, otoritas pelabuhan, TNI AL, Kementerian Perhubungan, maupun operator kapal mana pun.
+berafiliasi dengan aisstream.io, IMF, otoritas pelabuhan, TNI AL, Kementerian Perhubungan, maupun operator kapal mana pun.

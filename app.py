@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from streamlit_folium import st_folium
 
-from src import ais, analisis, muat_data, peta
+from src import ais, analisis, muat_data, peta, portwatch
 from src import mmsi as km
 
 # ------------------------------------------------------------------ konfigurasi
@@ -38,6 +38,7 @@ MERAH = "#ff4d6d"
 ABU = "#6c7a89"
 TEMPLATE = "plotly_dark"
 MAKS_SNAPSHOT_SESI = 90  # batas jejak yang disimpan di memori pada mode live
+JENDELA_MENIT = 30  # mode live: peta menampilkan posisi terakhir setiap kapal yang terdengar 30 menit terakhir
 
 
 def fmt_wib(ts) -> str:
@@ -76,6 +77,16 @@ def pelabuhan_df() -> pd.DataFrame:
 @st.cache_data(show_spinner=False)
 def titik_kunci_df() -> pd.DataFrame:
     return muat_data.muat_titik_kunci()
+
+
+@st.cache_data(show_spinner=False)
+def portwatch_df() -> pd.DataFrame:
+    return muat_data.muat_portwatch()
+
+
+@st.cache_data(show_spinner=False)
+def portwatch_ringkas_df() -> pd.DataFrame:
+    return muat_data.muat_portwatch_ringkas()
 
 
 @st.cache_data(show_spinner=False)
@@ -146,12 +157,13 @@ with st.sidebar:
             terkini, sumber, pesan = st.session_state["snapshot_live"]
         if sumber == "live":
             jejak = st.session_state.get("jejak_live", terkini)
+            terkini = muat_data.posisi_terakhir(jejak, JENDELA_MENIT)
         else:
             jejak = sampel_df()
-            terkini = muat_data.snapshot_terakhir(jejak)
+            terkini = muat_data.posisi_terakhir(jejak)
     else:
         jejak = sampel_df()
-        terkini = muat_data.snapshot_terakhir(jejak)
+        terkini = muat_data.posisi_terakhir(jejak)
         sumber, pesan = "sampel", "Sampel offline dari repositori."
 
     terkini = analisis.hanya_kapal(terkini)
@@ -204,16 +216,19 @@ st.markdown(
     "arah ikon mengikuti haluan, garis tepi teal menandai bendera Indonesia."
 )
 
+info = muat_data.info_sampel(jejak)
 if sumber == "live":
-    st.success(f"🟢 {pesan} Snapshot {fmt_wib(terkini['waktu_snapshot'].iloc[0]) if len(terkini) else '-'}.")
+    st.success(f"🟢 {pesan} Peta menampilkan posisi terakhir {len(terkini)} kapal yang terdengar sejak "
+               f"{fmt_wib(info['mulai'])}; tekan Refresh untuk menambah.")
 elif sumber_pilihan.startswith("Live"):
-    st.warning(f"🟠 {pesan} Snapshot sampel: {fmt_wib(terkini['waktu_snapshot'].iloc[0]) if len(terkini) else '-'}.")
+    st.warning(f"🟠 {pesan}")
 else:
-    info = muat_data.info_sampel(jejak)
     st.info(
-        f"📼 Sampel offline: {info['snapshot']} snapshot, {info['kapal']} kapal unik, "
+        f"📼 Sampel offline: posisi terakhir {info['kapal']} kapal dari {info['snapshot']} snapshot per menit, "
         f"{fmt_wib(info['mulai'])} sampai {fmt_wib(info['selesai'])}."
     )
+st.caption("ℹ️ Penerima AIS darat aisstream.io di kawasan ini masih jarang, sehingga peta live terutama menangkap kapal di "
+           "sekitar Singapura dan Batam. Untuk lalu lintas seluruh selat, buka halaman **📈 Strait traffic** (AIS satelit).")
 
 ringkas = analisis.ringkasan(terkini_f)
 k1, k2, k3, k4, k5, k6 = st.columns([1, 1.2, 1, 1, 1.3, 1.3])
@@ -251,19 +266,21 @@ if mode_belajar:
 
 # Navigasi memakai segmented control, bukan st.tabs: tab tersembunyi berukuran 0 piksel
 # membuat Leaflet (terutama HeatMap) gagal menggambar peta kedua. Hanya satu halaman dirender.
-HALAMAN = ["🚢 Live map", "🔥 Traffic heatmap", "👑 Who rules the strait", "⚓ Chokepoints & bases",
+HALAMAN = ["🚢 Live map", "📈 Strait traffic", "🔥 Traffic heatmap", "👑 Who rules the strait", "⚓ Chokepoints & bases",
            "📋 Data & sources", "🧭 How it works"]
+H_PETA, H_TRANSIT, H_HEAT, H_SIAPA, H_CHOKE, H_DATA, H_CARA = HALAMAN
 halaman = st.segmented_control("Halaman", HALAMAN, default=HALAMAN[0], label_visibility="collapsed")
 if halaman is None:
-    halaman = HALAMAN[0]
+    halaman = H_PETA
 
 # ------------------------------------------------------------------ halaman peta
-if halaman == HALAMAN[0]:
+if halaman == H_PETA:
     if terkini_f.empty:
         st.warning("Tidak ada kapal yang lolos filter.")
     else:
-        m = peta.peta_kapal(terkini_f, pelabuhan, titik_kunci)
-        st_folium(m, use_container_width=True, height=580, returned_objects=[], key="peta_kapal")
+        pusat, zoom = peta.pusat_dan_zoom(terkini_f)
+        m = peta.peta_kapal(terkini_f, pelabuhan, titik_kunci, pusat=pusat, zoom=zoom)
+        st_folium(m, use_container_width=True, height=580, returned_objects=[], key="peta_kapal", center=pusat, zoom=zoom)
         legenda = " · ".join(
             f"<span style='color:{w};font-weight:700'>■</span> {k}"
             for k, w in peta.WARNA_KATEGORI.items() if k in set(terkini_f["kategori"])
@@ -296,8 +313,115 @@ if halaman == HALAMAN[0]:
                 """
             )
 
+# ------------------------------------------------------------------ halaman transit harian
+if halaman == H_TRANSIT:
+    pw = portwatch_df()
+    if pw.empty:
+        st.warning("Data PortWatch belum tersedia. Jalankan `python scripts/perbarui_portwatch.py`.")
+    else:
+        st.markdown(
+            "Peta live hanya melihat kapal yang tertangkap penerima darat. Untuk gambaran utuh, halaman ini memakai "
+            "**IMF PortWatch**: hitungan kapal yang melintasi setiap selat per hari, dari AIS **satelit**, sejak 2019. "
+            f"Data terakhir: **{pw['tanggal'].max():%d %b %Y}** (PortWatch terbit dengan jeda beberapa hari)."
+        )
+        id_ke_nama = {k: v["nama"] for k, v in portwatch.SELAT.items() if k in set(pw["portid"])}
+        t1, t2, t3 = st.columns([1.4, 1, 1])
+        pilih_id = t1.selectbox("Strait", list(id_ke_nama), format_func=lambda k: f"{id_ke_nama[k]} · {portwatch.SELAT[k]['alki']}"
+                                if portwatch.SELAT[k]["grup"] == "Indonesia" else id_ke_nama[k])
+        jendela = t2.select_slider("Moving average (days)", [7, 14, 30, 60, 90], value=30)
+        rentang = t3.selectbox("Range", ["1 tahun", "2 tahun", "Semua (sejak 2019)"], index=2)
+        tr = portwatch.tren(pw, pilih_id, jendela)
+        if rentang != "Semua (sejak 2019)":
+            tahun = int(rentang.split()[0])
+            tr = tr[tr["tanggal"] >= tr["tanggal"].max() - pd.DateOffset(years=tahun)]
+
+        akhir = tr.tail(30)
+        setahun_lalu = pw[(pw["portid"] == pilih_id)
+                          & pw["tanggal"].between(tr["tanggal"].max() - pd.Timedelta(days=394), tr["tanggal"].max() - pd.Timedelta(days=365))]
+        m1, m2, m3, m4 = st.columns(4)
+        rata30 = akhir["n_total"].mean()
+        m1.metric("Kapal per hari (30 hari)", f"{rata30:,.0f}",
+                  f"{(rata30 / setahun_lalu['n_total'].mean() - 1) * 100:+.1f}% vs tahun lalu" if not setahun_lalu.empty else None)
+        m2.metric("Tanker per hari", f"{akhir['n_tanker'].mean():,.0f}", f"{100 * akhir['n_tanker'].sum() / max(akhir['n_total'].sum(), 1):.0f}% dari total", delta_color="off")
+        m3.metric("Kapasitas per hari", f"{akhir['capacity'].mean() / 1e6:,.1f} jt DWT")
+        m4.metric("Rekor harian", f"{tr['n_total'].max():,.0f}", f"{tr.loc[tr['n_total'].idxmax(), 'tanggal']:%d %b %Y}", delta_color="off")
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=tr["tanggal"], y=tr["n_total"], mode="lines", name="Harian",
+                                 line=dict(color="#3a4a5e", width=1), hovertemplate="%{x|%d %b %Y}: %{y} kapal<extra></extra>"))
+        fig.add_trace(go.Scatter(x=tr["tanggal"], y=tr["rata_bergerak"], mode="lines", name=f"Rata-rata {jendela} hari",
+                                 line=dict(color=TEAL, width=2.5), hovertemplate="%{x|%d %b %Y}: %{y:.0f} kapal<extra></extra>"))
+        tanker_rb = tr["n_tanker"].rolling(jendela, min_periods=max(1, jendela // 2)).mean()
+        fig.add_trace(go.Scatter(x=tr["tanggal"], y=tanker_rb, mode="lines", name=f"Tanker ({jendela} hari)",
+                                 line=dict(color=MERAH, width=2), hovertemplate="%{x|%d %b %Y}: %{y:.0f} tanker<extra></extra>"))
+        fig.update_layout(template=TEMPLATE, title=f"Transit harian {id_ke_nama[pilih_id]}", height=420,
+                          margin=dict(l=10, r=10, t=50, b=10), legend=dict(orientation="h", y=1.08, x=1, xanchor="right"),
+                          yaxis_title="kapal per hari", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+        st.plotly_chart(fig, use_container_width=True)
+        if pilih_id == "chokepoint5":
+            st.caption("⚠️ Angka Selat Malaka naik sekitar 30% dalam satu bulan pada November 2021, sementara selat lain tidak. "
+                       "Lompatan setajam itu lebih mungkin berasal dari perubahan cakupan atau cara penghitungan PortWatch "
+                       "daripada lonjakan lalu lintas sungguhan, jadi perbandingan sebelum dan sesudah 2022 perlu dibaca hati-hati.")
+
+        c1, c2 = st.columns(2)
+        bd = portwatch.bandingkan(pw, 365)
+        warna_bd = [TEAL if g == "Indonesia" else ABU for g in bd["grup"]]
+        bd["label"] = [f"{s_} · {a}" if g == "Indonesia" else s_ for s_, g, a in zip(bd["selat"], bd["grup"], bd["alki"])]
+        fig_bd = grafik_batang(bd, "rata_harian", "label", "Rata-rata kapal per hari, 365 hari terakhir", warna=warna_bd,
+                               hover="persen_tanker", satuan="kapal/hari")
+        fig_bd.update_traces(hovertemplate="<b>%{y}</b><br>%{x} kapal per hari<br>tanker %{customdata}%<extra></extra>")
+        fig_bd.update_xaxes(title="kapal per hari")
+        c1.plotly_chart(fig_bd, use_container_width=True)
+        kp = portwatch.komposisi(pw, pilih_id, 365)
+        warna_jenis = {"Tanker": MERAH, "Kontainer": "#4cc9f0", "Curah kering": "#f2b705", "Kargo umum": "#c77dff", "Ro-Ro": "#80ed99"}
+        fig_kp = grafik_batang(kp, "kapal", "jenis", f"Jenis kapal di {id_ke_nama[pilih_id]}, 365 hari terakhir",
+                               warna=[warna_jenis.get(j, ABU) for j in kp["jenis"]], hover="persen", satuan="transit")
+        c2.plotly_chart(fig_kp, use_container_width=True)
+        st.caption("Teal = selat di perairan Indonesia. Selat Malaka bukan ALKI: ia selat internasional yang dikelola bersama "
+                   "Indonesia, Malaysia, dan Singapura. Sunda (ALKI I), Lombok dan Makassar (ALKI II), serta Ombai (ALKI III) "
+                   "adalah jalur alternatif yang ditetapkan Indonesia.")
+
+        c3, c4 = st.columns(2)
+        with c3:
+            st.subheader("Unusual days")
+            an = portwatch.anomali(pw, pilih_id)
+            if an.empty:
+                st.write("Tidak ada hari yang menyimpang ≥ 2,5 simpangan baku dari 28 hari sebelumnya.")
+            else:
+                an = an.sort_values("tanggal", ascending=False).head(12)
+                an["tanggal"] = an["tanggal"].dt.strftime("%d %b %Y")
+                st.dataframe(an.rename(columns={"tanggal": "Tanggal", "n_total": "Kapal", "n_tanker": "Tanker", "z": "z-score"})
+                             [["Tanggal", "Kapal", "Tanker", "z-score"]], use_container_width=True, hide_index=True)
+        with c4:
+            st.subheader("Average per year")
+            pt = portwatch.per_tahun(pw[pw["portid"] == pilih_id])
+            st.dataframe(pt.rename(columns={"tahun": "Tahun", "rata_harian": "Kapal/hari", "hari": "Hari data"})
+                         [["Tahun", "Kapal/hari", "Hari data"]], use_container_width=True, hide_index=True)
+
+    if mode_belajar:
+        with st.expander("🎓 AIS darat vs AIS satelit, dan apa itu 'transit'"):
+            st.markdown(
+                """
+                Penerima AIS di darat hanya menjangkau 40–70 km dari pantai, dan jumlahnya tidak merata. **Satelit**
+                menangkap sinyal AIS dari orbit, sehingga cakupannya merata di tengah laut, tetapi datanya mahal dan
+                biasanya tidak dibuka secara live. IMF PortWatch membeli data satelit tersebut lalu membuka
+                **hasil olahannya**: berapa kapal yang **melintasi** garis batas setiap selat per hari.
+
+                Satu "transit" = satu kapal yang masuk dari satu sisi dan keluar dari sisi lain. Kapal yang berlabuh di
+                selat tidak dihitung, jadi angka ini mengukur **lalu lintas lewat**, bukan kepadatan.
+
+                Hari yang tidak biasa dicari dengan z-score yang sama seperti mendeteksi lonjakan harga:
+
+                ```python
+                acuan = d["n_total"].shift(1).rolling(28)          # 28 hari sebelumnya, tanpa hari ini
+                d["z"] = (d["n_total"] - acuan.mean()) / acuan.std()
+                ```
+                `shift(1)` penting: tanpa itu, hari yang sedang diuji ikut membentuk "kebiasaan"-nya sendiri.
+                """
+            )
+
 # ------------------------------------------------------------------ halaman heatmap
-if halaman == HALAMAN[1]:
+if halaman == H_HEAT:
     info_jejak = muat_data.info_sampel(jejak_f)
     if sumber == "live" and info_jejak["snapshot"] < 3:
         st.info(
@@ -316,9 +440,10 @@ if halaman == HALAMAN[1]:
     if jejak_f.empty:
         st.warning("Tidak ada jejak yang lolos filter.")
     else:
+        pusat2, zoom2 = peta.pusat_dan_zoom(jejak_f)
         m2 = peta.peta_heatmap(jejak_f, pelabuhan, titik_kunci, teratas if jumlah_sel else None,
-                               radius=radius_heat, blur=radius_heat + 4)
-        st_folium(m2, use_container_width=True, height=580, returned_objects=[], key="peta_heatmap")
+                               radius=radius_heat, blur=radius_heat + 4, pusat=pusat2, zoom=zoom2)
+        st_folium(m2, use_container_width=True, height=580, returned_objects=[], key="peta_heatmap", center=pusat2, zoom=zoom2)
     st.caption(
         f"Heatmap dibangun dari {info_jejak['baris']:,} posisi, {info_jejak['snapshot']} snapshot, "
         f"{info_jejak['kapal']} kapal unik ({fmt_wib(info_jejak['mulai'])} – {fmt_wib(info_jejak['selesai'])})."
@@ -368,7 +493,7 @@ if halaman == HALAMAN[1]:
             )
 
 # ------------------------------------------------------------------ halaman siapa yang menguasai
-if halaman == HALAMAN[2]:
+if halaman == H_SIAPA:
     if terkini_f.empty:
         st.warning("Tidak ada kapal yang lolos filter.")
     else:
@@ -431,7 +556,7 @@ if halaman == HALAMAN[2]:
             )
 
 # ------------------------------------------------------------------ halaman chokepoint & pangkalan
-if halaman == HALAMAN[3]:
+if halaman == H_CHOKE:
     st.markdown(
         "Siapa yang sedang berada di **titik tersempit** selat, dan apa yang ada di depan **pangkalan TNI AL**? "
         "Radius dihitung dari posisi pada snapshot terkini (setelah filter)."
@@ -482,7 +607,7 @@ if halaman == HALAMAN[3]:
             )
 
 # ------------------------------------------------------------------ halaman data
-if halaman == HALAMAN[4]:
+if halaman == H_DATA:
     st.subheader("Latest snapshot")
     kolom_tampil = ["label", "mmsi", "bendera", "kategori", "tipe", "tujuan", "fase", "status_nav", "sog_knot",
                     "kecepatan_kmh", "cog", "heading", "lat", "lon", "pelabuhan_terdekat", "jarak_pelabuhan_km",
@@ -525,7 +650,7 @@ if halaman == HALAMAN[4]:
     )
 
 # ------------------------------------------------------------------ halaman cara kerja
-if halaman == HALAMAN[5]:
+if halaman == H_CARA:
     st.subheader("Data flow")
     st.graphviz_chart(
         """
