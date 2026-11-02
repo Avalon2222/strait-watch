@@ -50,8 +50,8 @@ dengan ikon yang berputar mengikuti haluan.
 | 🧭 How it works | Diagram alur data dari kapal sampai peta, tabel per langkah, penjelasan mengapa AIS "didengarkan" bukan "diminta" |
 | 🎓 Learning mode | Toggle di sidebar: setiap halaman menampilkan expander berisi konsep (AIS, MMSI, bendera kemudahan, DivIcon berputar, grid kepadatan, haversine) beserta potongan kode |
 
-Sidebar menyediakan pilihan sumber data (**Offline sample** sebagai default, atau **Live** dengan cadangan otomatis
-ke sampel bila aliran gagal), lama mendengarkan (10–60 detik), tombol Refresh, serta filter jenis kapal, bendera, kapal berlabuh,
+Sidebar menyediakan pilihan sumber data (**Live** dengan cadangan otomatis ke sampel bila aliran gagal, atau
+**Offline sample**), lama mendengarkan (10–60 detik), tombol Refresh, serta filter jenis kapal, bendera, kapal berlabuh,
 dan kecepatan.
 
 Mode live memakai [aisstream.io](https://aisstream.io): gratis untuk penggunaan non-komersial, kunci API didapat
@@ -80,7 +80,7 @@ streamlit run app.py
 ```
 
 Buka `http://localhost:8501`. Jalankan pengujian dengan `python -m pytest tests/ -v` (83 tes; otomatis jalan di
-GitHub Actions setiap push dan pull request). Tanpa kunci API, aplikasi tetap jalan dengan **Offline sample** (default); peta dasar tetap
+GitHub Actions setiap push dan pull request). Tanpa kunci API, pilih **Offline sample** di sidebar; peta dasar tetap
 memerlukan koneksi untuk mengunduh tile Esri.
 
 Untuk merekam sampel baru (misalnya pada jam sibuk siang hari):
