@@ -120,7 +120,7 @@ def muat_live_atau_sampel(api_key: str | None, durasi: int = ais.DURASI_DEFAULT,
         df, jumlah = muat_live(api_key, durasi, cache_statis)
         if df.empty:
             raise ais.AisError("Terhubung, tetapi tidak ada posisi kapal dalam kotak pantau.")
-        return df, "live", f"Data live aisstream.io: {len(df)} kapal dari {jumlah:,} pesan dalam {durasi} detik."
+        return df, "live", f"Data live aisstream.io: {jumlah:,} pesan AIS dalam {durasi} detik."
     except ais.AisError as exc:
         return snapshot_terakhir(muat_sampel()), "sampel", f"{exc} Menampilkan sampel offline."
 
