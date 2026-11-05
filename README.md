@@ -8,10 +8,20 @@
 > sedang berada di titik tersempit selat atau di depan pangkalan TNI AL. Dibangun dengan Python, pandas, Streamlit,
 > Folium, dan Plotly.
 
-*A live map of ship traffic through the Strait of Malacca and the Singapore Strait from public AIS data (aisstream.io),
-plus daily satellite-AIS transit counts since 2019 (IMF PortWatch) for Malacca and Indonesia's archipelagic sea lanes:
-ship types, flag states, trends, unusual days, and who is sitting at the chokepoints right now. Python, pandas,
-Streamlit, Folium, Plotly. Ships with an offline sample so it works without an API key.*
+## 🇬🇧 In English
+
+**A quarter of world trade sails through here.** A live map of ship traffic in the Strait of Malacca and the Singapore Strait from public AIS data, plus daily satellite-AIS transit counts since 2019 for Malacca and Indonesia's sea lanes (Sunda, Lombok, Makassar, Ombai). Who is passing, what they carry, and who is sitting at the chokepoints right now.
+
+- **Track** live vessels rotated to their heading and colored by type, streamed over WebSocket.
+- **Compare** daily transits across straits, with Hormuz, Suez, and Taiwan as benchmarks.
+- **Count** ships near the narrowest points and in front of Indonesian naval bases.
+- **Run anywhere**: an offline sample kicks in when there is no API key or the stream drops.
+
+**Built with:** Python, pandas, websockets, Folium, Plotly, Streamlit  
+**Data:** aisstream.io (live AIS), IMF PortWatch (satellite AIS transits)  
+**Engineering:** pytest suite with CI on GitHub Actions and a weekly workflow that refreshes the PortWatch data
+
+*The rest of this README is in Indonesian.*
 
 **🚀 Coba langsung di browser:** [strait-watch.streamlit.app](https://strait-watch.streamlit.app)
 
