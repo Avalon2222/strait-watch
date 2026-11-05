@@ -1,5 +1,7 @@
 # 🚢 Strait Watch
 
+[![tests](https://github.com/Avalon2222/strait-watch/actions/workflows/tests.yml/badge.svg)](https://github.com/Avalon2222/strait-watch/actions/workflows/tests.yml) [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/) [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE) [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://strait-watch.streamlit.app)
+
 > **Seperempat perdagangan dunia lewat sini.** Peta live kapal di Selat Malaka dan Selat Singapura dari data AIS publik
 > (aisstream.io), ditambah hitungan transit harian sejak 2019 dari AIS satelit (IMF PortWatch) untuk Selat Malaka,
 > Sunda, Lombok, Makassar, dan Ombai: jenis kapal, negara bendera, tren, hari-hari yang tidak biasa, dan siapa yang
