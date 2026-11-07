@@ -27,13 +27,16 @@ def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return 2 * R_BUMI_KM * math.asin(math.sqrt(a))
 
 
-def haversine_vektor(lat: np.ndarray, lon: np.ndarray, lat0: float, lon0: float) -> np.ndarray:
-    """Versi numpy: jarak banyak titik ke satu titik acuan, dalam km."""
+def haversine_vektor(lat: np.ndarray, lon: np.ndarray, lat0, lon0) -> np.ndarray:
+    """Versi numpy: jarak banyak titik ke satu titik acuan, dalam km.
+
+    lat0/lon0 boleh angka tunggal atau array sepanjang lat/lon (jarak titik ke-i ke acuan ke-i).
+    """
     p1 = np.radians(np.asarray(lat, dtype=float))
-    p2 = math.radians(lat0)
+    p2 = np.radians(np.asarray(lat0, dtype=float))
     dp = p2 - p1
-    dl = np.radians(lon0 - np.asarray(lon, dtype=float))
-    a = np.sin(dp / 2) ** 2 + np.cos(p1) * math.cos(p2) * np.sin(dl / 2) ** 2
+    dl = np.radians(np.asarray(lon0, dtype=float) - np.asarray(lon, dtype=float))
+    a = np.sin(dp / 2) ** 2 + np.cos(p1) * np.cos(p2) * np.sin(dl / 2) ** 2
     return 2 * R_BUMI_KM * np.arcsin(np.sqrt(a))
 
 
@@ -180,8 +183,9 @@ def kapal_di_sekitar(df: pd.DataFrame, lat: float, lon: float, radius_km: float)
     if df.empty:
         return df
     jarak = haversine_vektor(df["lat"].to_numpy(), df["lon"].to_numpy(), lat, lon)
-    hasil = df.assign(jarak_km=np.round(jarak, 1))
-    return hasil[hasil["jarak_km"] <= radius_km].sort_values("jarak_km").drop_duplicates("mmsi")
+    # Saring pakai jarak asli, baru dibulatkan untuk tampilan (25,04 km tidak masuk radius 25 km).
+    hasil = df[jarak <= radius_km].assign(jarak_km=np.round(jarak[jarak <= radius_km], 1))
+    return hasil.sort_values("jarak_km").drop_duplicates("mmsi")
 
 
 def sibuk_per_titik(df: pd.DataFrame, titik: pd.DataFrame, radius_km: float = 25.0) -> pd.DataFrame:
@@ -199,16 +203,16 @@ def panjang_jejak_km(jejak: pd.DataFrame, teratas: int = 10) -> pd.DataFrame:
     """Total jarak yang ditempuh setiap kapal sepanjang rekaman (jumlah segmen antar snapshot)."""
     if jejak.empty or jejak["waktu_snapshot"].nunique() < 2:
         return pd.DataFrame(columns=["mmsi", "label", "kategori", "segmen", "km"])
-    j = jejak.sort_values(["mmsi", "waktu_snapshot"])
-    baris = []
-    for mmsi, g in j.groupby("mmsi"):
-        if len(g) < 2:
-            continue
-        lat, lon = g["lat"].to_numpy(), g["lon"].to_numpy()
-        km_total = sum(haversine_km(lat[i], lon[i], lat[i + 1], lon[i + 1]) for i in range(len(g) - 1))
-        baris.append({"mmsi": mmsi, "label": g["label"].iloc[-1], "kategori": g["kategori"].iloc[-1],
-                      "segmen": len(g) - 1, "km": round(km_total, 1)})
-    hasil = pd.DataFrame(baris, columns=["mmsi", "label", "kategori", "segmen", "km"])
+    j = jejak.sort_values(["mmsi", "waktu_snapshot"]).reset_index(drop=True)
+    # Semua segmen dihitung sekaligus: posisi sekarang vs posisi sebelumnya dari kapal yang sama.
+    sebelum = j.groupby("mmsi")[["lat", "lon"]].shift(1)
+    j["km"] = haversine_vektor(j["lat"], j["lon"], sebelum["lat"], sebelum["lon"])
+    seg = j.dropna(subset=["km"])
+    if seg.empty:
+        return pd.DataFrame(columns=["mmsi", "label", "kategori", "segmen", "km"])
+    hasil = seg.groupby("mmsi").agg(label=("label", "last"), kategori=("kategori", "last"),
+                                    segmen=("km", "size"), km=("km", "sum")).reset_index()
+    hasil["km"] = hasil["km"].round(1)
     return hasil.sort_values("km", ascending=False).head(teratas).reset_index(drop=True)
 
 
