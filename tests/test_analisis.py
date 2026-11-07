@@ -131,3 +131,38 @@ def test_pusat_dan_zoom():
     seluruh = pd.DataFrame({"lat": [5.8, 1.2], "lon": [95.3, 104.0]})
     assert peta.pusat_dan_zoom(seluruh)[1] < z  # seluruh selat: lebih jauh
     assert peta.pusat_dan_zoom(df.iloc[0:0]) == (peta.PUSAT_SELAT, peta.ZOOM_AWAL)
+
+
+def test_haversine_vektor_acuan_berupa_array():
+    lat = np.array([1.0, 2.0, 3.0])
+    lon = np.array([100.0, 101.0, 102.0])
+    lat0 = np.array([1.5, 2.5, 3.5])
+    lon0 = np.array([100.5, 101.5, 102.5])
+    hasil = analisis.haversine_vektor(lat, lon, lat0, lon0)
+    satu_satu = [analisis.haversine_km(a, b, c, d) for a, b, c, d in zip(lat, lon, lat0, lon0)]
+    assert hasil == pytest.approx(satu_satu)
+
+
+def test_panjang_jejak_banyak_segmen_dan_kapal_satu_titik():
+    t = pd.to_datetime(["2026-11-02 10:00", "2026-11-02 10:05", "2026-11-02 10:10"], utc=True)
+    jejak = pd.DataFrame({
+        "mmsi": ["A", "A", "A", "B"],
+        "waktu_snapshot": [t[2], t[0], t[1], t[0]],          # sengaja tidak urut
+        "lat": [1.2, 1.0, 1.1, 2.0],
+        "lon": [100.0, 100.0, 100.0, 101.0],
+        "label": ["Kapal A", "Kapal A", "Kapal A", "Kapal B"],
+        "kategori": ["Tanker", "Tanker", "Tanker", "Kargo"],
+    })
+    pj = analisis.panjang_jejak_km(jejak)
+    assert list(pj["mmsi"]) == ["A"]                         # B cuma satu titik, tidak punya segmen
+    assert pj.iloc[0]["segmen"] == 2
+    assert pj.iloc[0]["km"] == pytest.approx(analisis.haversine_km(1.0, 100.0, 1.2, 100.0), abs=0.1)
+
+
+def test_kapal_di_sekitar_tepat_di_luar_radius_tidak_masuk():
+    # 0,2249 derajat lintang ~ 25,01 km: dulu lolos karena dibulatkan dulu jadi 25,0
+    df = pd.DataFrame({"mmsi": ["1", "2"], "lat": [0.2249, 0.1], "lon": [100.0, 100.0]})
+    jarak = analisis.haversine_km(0, 100, 0.2249, 100)
+    assert 25.0 < jarak < 25.05
+    sekitar = analisis.kapal_di_sekitar(df, 0.0, 100.0, 25)
+    assert list(sekitar["mmsi"]) == ["2"]
