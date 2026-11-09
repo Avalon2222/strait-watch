@@ -44,3 +44,71 @@ def test_popup_aman_dari_html():
 def test_warna_kategori_tak_dikenal_pakai_warna_lain():
     assert peta.warna_kategori("kategori-ngawur") == peta.WARNA_KATEGORI[km.KATEGORI_LAIN]
     assert peta.warna_kategori(None) == peta.warna_kategori(km.TIDAK_DIKETAHUI)
+
+
+def _armada() -> pd.DataFrame:
+    return pd.DataFrame([
+        {"mmsi": "525000001", "label": "KM UJI", "nama": "KM UJI", "bendera": "Indonesia", "kategori": "Kargo",
+         "lat": 1.2, "lon": 103.8, "arah": 90.0},
+        {"mmsi": "563000002", "label": "SG TANKER", "nama": "SG TANKER", "bendera": "Singapura", "kategori": "Tanker",
+         "lat": 1.25, "lon": 103.9, "arah": np.nan},
+        {"mmsi": "533000003", "label": "MY TUG", "nama": "MY TUG", "bendera": "Malaysia", "kategori": "Tunda & servis",
+         "lat": 2.1, "lon": 101.5, "arah": 270.0},
+    ])
+
+
+def _render(m) -> str:
+    return m.get_root().render()
+
+
+def test_ikon_kapal_berputar_atau_titik():
+    berputar = peta.ikon_kapal("#fff", 45.4).options["html"]
+    assert "rotate(45deg)" in berputar and "<path" in berputar
+    titik = peta.ikon_kapal("#fff", np.nan).options["html"]
+    assert "<circle" in titik and "rotate" not in titik
+
+
+def test_teks_format_dan_kosong():
+    assert peta._teks(1234.56, " km") == "1,235 km"
+    assert peta._teks(7.5, " m", 1) == "7.5 m"
+    assert peta._teks(np.nan) == "-" and peta._teks(None) == "-" and peta._teks("") == "-"
+    assert peta._teks("abc", "!") == "abc!"
+
+
+def test_peta_kapal_satu_lapisan_per_kategori():
+    html = _render(peta.peta_kapal(_armada()))
+    assert html.count("L.marker(") == 3
+    for nama in ("Kargo", "Tanker", "Tunda \u0026 servis"):
+        assert nama in html
+    # Kapal Indonesia disorot dengan garis teal.
+    assert peta.WARNA_INDONESIA in html
+
+
+def test_peta_kapal_tanpa_sorotan_indonesia():
+    html = _render(peta.peta_kapal(_armada(), sorot_indonesia=False))
+    assert f'stroke="{peta.WARNA_INDONESIA}"' not in html
+
+
+def test_peta_kapal_dengan_pelabuhan_dan_titik_kunci():
+    pelabuhan = pd.DataFrame([
+        {"nama": "Batam", "negara": "Indonesia", "jenis": "pelabuhan", "lat": 1.1, "lon": 104.0},
+        {"nama": "Lanal Batam", "negara": "Indonesia", "jenis": "pangkalan_al", "lat": 1.15, "lon": 104.05},
+    ])
+    titik = pd.DataFrame([{"nama": "One Fathom Bank", "keterangan": "Bagian tersempit", "lat": 2.88, "lon": 100.98}])
+    html = _render(peta.peta_kapal(_armada(), pelabuhan=pelabuhan, titik_kunci=titik))
+    assert "Lanal Batam" in html and "One Fathom Bank" in html
+    assert html.count("L.circleMarker(") == 2 and html.count("L.circle(") == 1
+
+
+def test_peta_heatmap_dengan_sel_terpadat():
+    jejak = pd.DataFrame({"lat": [1.2, 1.21, np.nan, 2.0], "lon": [103.8, 103.81, 103.9, np.nan]})
+    sel = pd.DataFrame([{"lat_tengah": 1.2, "lon_tengah": 103.8, "kapal": 12, "titik": 40}])
+    html = _render(peta.peta_heatmap(jejak, sel_terpadat=sel))
+    assert "L.heatLayer" in html
+    assert "#1: 12 kapal, 40 posisi" in html
+
+
+def test_peta_heatmap_tanpa_titik_tetap_jadi():
+    jejak = pd.DataFrame({"lat": [np.nan], "lon": [np.nan]})
+    html = _render(peta.peta_heatmap(jejak))
+    assert "L.heatLayer" not in html
