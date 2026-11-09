@@ -94,3 +94,37 @@ def test_kumpulkan_tanpa_server_menjadi_aiserror(monkeypatch):
     monkeypatch.setattr(ais, "URL_STREAM", "ws://127.0.0.1:9")  # port discard: koneksi pasti ditolak
     with pytest.raises(ais.AisError):
         ais.kumpulkan("kunci", durasi=1)
+
+
+def test_ambil_api_key_dari_env(monkeypatch):
+    monkeypatch.setenv("AISSTREAM_API_KEY", "  abc123  ")
+    assert ais.ambil_api_key() == "abc123"
+    monkeypatch.setenv("AISSTREAM_API_KEY", "   ")
+    assert ais.ambil_api_key() is None
+    monkeypatch.delenv("AISSTREAM_API_KEY")
+    assert ais.ambil_api_key() is None
+
+
+@pytest.mark.parametrize("nilai, harapan", [
+    (12, 12.0), ("3.5", 3.5), (None, None), ("abc", None), (float("nan"), None), ([1], None),
+])
+def test_angka_aman(nilai, harapan):
+    assert ais._angka(nilai) == harapan
+
+
+def test_angka_pakai_default():
+    assert ais._angka(None, 0) == 0
+    assert ais._angka(float("nan"), -1) == -1
+
+
+def test_bersihkan_teks_buang_padding_ais():
+    assert ais._bersihkan_teks("SINGAPORE@@@@@@@    ") == "SINGAPORE"
+    assert ais._bersihkan_teks(None) == ""
+    assert ais._bersihkan_teks(525) == "525"
+
+
+def test_waktu_meta_format_aisstream():
+    t = ais._waktu_meta({"time_utc": "2026-11-02 17:00:01.123456789 +0000 UTC"})
+    assert t == pd.Timestamp("2026-11-02 17:00:01", tz="UTC")
+    assert ais._waktu_meta({}) is None
+    assert ais._waktu_meta({"time_utc": "bukan waktu"}) is None
