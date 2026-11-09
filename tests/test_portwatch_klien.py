@@ -97,3 +97,12 @@ def test_ambil_harian_gagal_terus(monkeypatch):
     with pytest.raises(portwatch.PortWatchError, match="tetap gagal"):
         portwatch.ambil_harian(["chokepoint5"], putaran=2)
 
+
+def test_ringkasan_tahunan_ambil_kolom_yang_ada_saja(monkeypatch):
+    _server(monkeypatch, [{"features": [
+        {"attributes": {"portid": "chokepoint5", "portname": "Malacca Strait", "lat": 2.5, "lon": 101.0,
+                        "vessel_count_total": 80000, "kolom_lain": "abaikan"}},
+    ]}])
+    df = portwatch.ambil_ringkasan_tahunan()
+    assert list(df.columns) == ["portid", "portname", "lat", "lon", "vessel_count_total"]
+    assert df.iloc[0]["portname"] == "Malacca Strait"
