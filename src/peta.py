@@ -67,13 +67,20 @@ def _teks(v, satuan: str = "", desimal: int = 0) -> str:
         return f"{v}{satuan}"
 
 
+def _isi(v):
+    """Nilai apa adanya, atau None kalau kosong/NaN (NaN itu truthy, jadi `or` biasa tidak cukup)."""
+    if v is None or (isinstance(v, float) and pd.isna(v)) or str(v).strip() == "":
+        return None
+    return v
+
+
 def popup_kapal(b: pd.Series) -> str:
     """HTML popup untuk satu kapal."""
-    label = html.escape(str(b.get("label") or b.get("nama") or f"MMSI {b.get('mmsi')}"))
+    label = html.escape(str(_isi(b.get("label")) or _isi(b.get("nama")) or f"MMSI {b.get('mmsi')}"))
     bendera = html.escape(str(b.get("bendera", "")))
     tipe = html.escape(str(b.get("tipe", "")))
-    tujuan = html.escape(str(b.get("tujuan") or "-"))
-    pelabuhan = b.get("pelabuhan_terdekat")
+    tujuan = html.escape(str(_isi(b.get("tujuan")) or "-"))
+    pelabuhan = _isi(b.get("pelabuhan_terdekat"))
     baris_pelabuhan = (
         f"<tr><td>Pelabuhan terdekat</td><td>{html.escape(str(pelabuhan))} ({_teks(b.get('jarak_pelabuhan_km'), ' km')})</td></tr>"
         if pelabuhan else ""
