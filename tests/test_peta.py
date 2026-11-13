@@ -112,3 +112,15 @@ def test_peta_heatmap_tanpa_titik_tetap_jadi():
     jejak = pd.DataFrame({"lat": [np.nan], "lon": [np.nan]})
     html = _render(peta.peta_heatmap(jejak))
     assert "L.heatLayer" not in html
+
+
+def test_peta_kapal_kategori_kosong_tetap_digambar():
+    armada = _armada()
+    armada.loc[0, "kategori"] = np.nan
+    armada.loc[1, "kategori"] = "Kategori aneh"
+    armada.loc[2, "label"] = np.nan
+    html = _render(peta.peta_kapal(armada))
+    # Sebelumnya kapal berkategori NaN/tak dikenal hilang dari peta karena lapisannya tidak pernah ditambahkan.
+    assert html.count("L.marker(") == 3
+    assert km.TIDAK_DIKETAHUI in html
+    assert "nan ·" not in html and "MY TUG ·" in html
