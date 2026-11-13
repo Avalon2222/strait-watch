@@ -153,14 +153,18 @@ def peta_kapal(df: pd.DataFrame, pelabuhan: pd.DataFrame | None = None, titik_ku
 
     lapisan: dict[str, folium.FeatureGroup] = {}
     for _, b in df.iterrows():
-        kategori = b.get("kategori") or km.TIDAK_DIKETAHUI
+        # NaN itu truthy: tanpa _isi, kapal berkategori kosong masuk lapisan "nan" yang tidak pernah digambar.
+        kategori = _isi(b.get("kategori")) or km.TIDAK_DIKETAHUI
+        if kategori not in km.URUTAN_KATEGORI:
+            kategori = km.TIDAK_DIKETAHUI
+        label = _isi(b.get("label")) or _isi(b.get("nama")) or f"MMSI {b.get('mmsi')}"
         indo = b.get("bendera") == "Indonesia"
         garis = WARNA_INDONESIA if (indo and sorot_indonesia) else "#111"
         fg = lapisan.setdefault(kategori, folium.FeatureGroup(name=kategori, show=True))
         folium.Marker(
             location=(b["lat"], b["lon"]),
             icon=ikon_kapal(warna_kategori(kategori), b.get("arah"), ukuran=18 if indo else 15, garis=garis),
-            tooltip=f"{b.get('label')} · {kategori} · {b.get('bendera')}",
+            tooltip=f"{label} · {kategori} · {b.get('bendera')}",
             popup=folium.Popup(popup_kapal(b), max_width=340),
         ).add_to(fg)
     for nama in km.URUTAN_KATEGORI:
