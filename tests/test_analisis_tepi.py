@@ -20,3 +20,17 @@ def test_sibuk_per_titik_tanpa_kapal_semua_nol():
     hasil = analisis.sibuk_per_titik(kosong, titik)
     assert hasil["kapal"].tolist() == [0, 0] and hasil["tanker"].tolist() == [0, 0]
     assert analisis.sibuk_per_titik(kosong, titik.iloc[0:0]).empty
+
+
+def test_hitung_unik_kategori_kosong_jadi_tidak_diketahui():
+    df = pd.DataFrame({"mmsi": ["1", "1", "2", "3"], "kategori": ["Kargo", "Kargo", np.nan, "Kargo"]})
+    h = analisis.hitung_unik(df, "kategori").set_index("kategori")
+    assert h.loc["Kargo", "kapal"] == 2           # MMSI 1 dihitung sekali
+    assert h.loc[km.TIDAK_DIKETAHUI, "kapal"] == 1
+    assert h["persen"].sum() == 100.0
+
+
+def test_hitung_unik_kolom_tidak_ada_dan_batas_teratas():
+    df = pd.DataFrame({"mmsi": ["1", "2", "3"], "bendera": ["A", "B", "C"]})
+    assert analisis.hitung_unik(df, "kolom_aneh").empty
+    assert len(analisis.hitung_unik(df, "bendera", teratas=2)) == 2
