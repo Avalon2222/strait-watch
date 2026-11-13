@@ -125,7 +125,7 @@ def tambah_pelabuhan(m: folium.Map, pelabuhan: pd.DataFrame) -> None:
             location=(b["lat"], b["lon"]), radius=5 if pangkalan else 4,
             color=WARNA_INDONESIA if pangkalan else "#ffffff", weight=2 if pangkalan else 1,
             fill=True, fill_color="#07111f" if pangkalan else "#ffffff", fill_opacity=0.9,
-            tooltip=f"{'⚓ ' if pangkalan else ''}{b['nama']} ({b['negara']})",
+            tooltip=f"{'⚓ ' if pangkalan else ''}{html.escape(str(b['nama']))} ({html.escape(str(b['negara']))})",
         ).add_to(fg_b if pangkalan else fg_p)
     fg_p.add_to(m)
     fg_b.add_to(m)
@@ -137,7 +137,7 @@ def tambah_titik_kunci(m: folium.Map, titik: pd.DataFrame) -> None:
     for _, t in titik.iterrows():
         folium.Circle(
             location=(t["lat"], t["lon"]), radius=15_000, color="#f2b705", weight=1.5, dash_array="6 6",
-            fill=False, tooltip=f"{t['nama']}: {t['keterangan']}",
+            fill=False, tooltip=f"{html.escape(str(t['nama']))}: {html.escape(str(t['keterangan']))}",
         ).add_to(fg)
     fg.add_to(m)
 

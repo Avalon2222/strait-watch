@@ -124,3 +124,22 @@ def test_peta_kapal_kategori_kosong_tetap_digambar():
     assert html.count("L.marker(") == 3
     assert km.TIDAK_DIKETAHUI in html
     assert "nan ·" not in html and "MY TUG ·" in html
+
+
+def test_peta_dasar_pakai_tile_gelap():
+    html = _render(peta.peta_dasar())
+    assert peta.TILE_GELAP.split("{")[0] in html
+    assert "L.control.scale" in html
+
+
+def test_tooltip_pelabuhan_dan_titik_kunci_di_escape():
+    m = peta.peta_dasar()
+    peta.tambah_pelabuhan(m, pd.DataFrame([
+        {"nama": "Dermaga <A&B>", "negara": "Indonesia", "jenis": "pelabuhan", "lat": 1.1, "lon": 104.0},
+    ]))
+    peta.tambah_titik_kunci(m, pd.DataFrame([
+        {"nama": "Selat <X>", "keterangan": "lebar < 3 km", "lat": 2.0, "lon": 101.0},
+    ]))
+    html = _render(m)
+    assert "Dermaga <A&B>" not in html and "Selat <X>" not in html
+    assert "Dermaga &lt;A&amp;B&gt;" in html
