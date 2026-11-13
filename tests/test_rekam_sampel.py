@@ -29,3 +29,36 @@ def test_rapikan_posisi_rekaman_kosong_tetap_berkolom():
     df = rs.rapikan_posisi([])
     assert df.empty
     assert {"mmsi", "lat", "lon", "waktu_snapshot"} <= set(df.columns)
+
+
+def test_rekam_dengan_websocket_tiruan(tmp_path, monkeypatch):
+    import json
+
+    import websockets.sync.client as klien
+
+    from test_ais import pesan_posisi, pesan_statis
+
+    antrean = [pesan_statis(), pesan_posisi(lat=1.2, lon=103.9), pesan_posisi(mmsi=533000001, lat=-6.1, lon=106.8)]
+    terkirim = []
+
+    class WsPalsu:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def send(self, teks):
+            terkirim.append(json.loads(teks))
+
+        def recv(self, timeout):
+            if antrean:
+                return json.dumps(antrean.pop(0))
+            raise TimeoutError
+
+    monkeypatch.setattr(klien, "connect", lambda *a, **k: WsPalsu())
+    df_pos, df_stat = rs.rekam("kunci-uji", durasi=0.3, interval=60, keluaran=tmp_path)
+    assert terkirim and terkirim[0]["APIKey"] == "kunci-uji"
+    assert df_pos["mmsi"].tolist() == ["525019001"]       # kapal di Jakarta tersaring keluar
+    assert df_stat["mmsi"].tolist() == ["525019001"]
+    assert (tmp_path / "posisi.csv").exists() and (tmp_path / "kapal_statis.csv").exists()
