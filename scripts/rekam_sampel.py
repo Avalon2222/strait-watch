@@ -25,6 +25,20 @@ from src import ais  # noqa: E402
 DIR_SAMPEL = Path(__file__).resolve().parent.parent / "data" / "sample"
 
 
+def rapikan_posisi(baris: list[dict]) -> pd.DataFrame:
+    """Buang posisi di luar kotak Selat, urutkan per snapshot, dan bulatkan koordinat ke 5 desimal (±1 m).
+
+    Rekaman tanpa satu pun posisi (kunci salah, server sepi) tetap menghasilkan tabel berkolom lengkap.
+    """
+    df = pd.DataFrame(baris, columns=None if baris else ais.KOLOM_POSISI)
+    df = df[df["lat"].between(ais.BBOX_SELAT["lamin"], ais.BBOX_SELAT["lamax"])
+            & df["lon"].between(ais.BBOX_SELAT["lomin"], ais.BBOX_SELAT["lomax"])]
+    df = df.sort_values(["waktu_snapshot", "mmsi"])
+    for k in ("lat", "lon"):
+        df[k] = df[k].astype(float).round(5)
+    return df.reset_index(drop=True)
+
+
 def rekam(api_key: str, durasi: int, interval: int, keluaran: Path = DIR_SAMPEL) -> tuple[pd.DataFrame, pd.DataFrame]:
     from websockets.exceptions import WebSocketException
     from websockets.sync.client import connect
@@ -64,12 +78,7 @@ def rekam(api_key: str, durasi: int, interval: int, keluaran: Path = DIR_SAMPEL)
             print(f"  koneksi terputus ({type(exc).__name__}), menyambung ulang...", flush=True)
             time.sleep(3)
 
-    df_pos = pd.DataFrame(list(posisi.values()))
-    df_pos = df_pos[df_pos["lat"].between(ais.BBOX_SELAT["lamin"], ais.BBOX_SELAT["lamax"])
-                    & df_pos["lon"].between(ais.BBOX_SELAT["lomin"], ais.BBOX_SELAT["lomax"])]
-    df_pos = df_pos.sort_values(["waktu_snapshot", "mmsi"])
-    for k in ("lat", "lon"):
-        df_pos[k] = df_pos[k].round(5)
+    df_pos = rapikan_posisi(list(posisi.values()))
     df_stat = pd.DataFrame(list(statis.values()), columns=ais.KOLOM_STATIS)
     df_pos.to_csv(keluaran / "posisi.csv", index=False)
     df_stat.to_csv(keluaran / "kapal_statis.csv", index=False)
