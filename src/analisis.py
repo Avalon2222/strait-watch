@@ -171,6 +171,8 @@ def grid_kepadatan(df: pd.DataFrame, ukuran_deg: float = 0.25) -> pd.DataFrame:
 
 def label_lokasi(lat: float, lon: float, pelabuhan: pd.DataFrame, titik_kunci: pd.DataFrame | None = None) -> str:
     """Teks seperti 'Dekat Port Klang (18 km)' untuk sebuah koordinat."""
+    if lat is None or lon is None or pd.isna(lat) or pd.isna(lon):
+        return "Lokasi tidak diketahui"
     acuan = pelabuhan[["nama", "lat", "lon"]]
     if titik_kunci is not None and not titik_kunci.empty:
         acuan = pd.concat([acuan, titik_kunci[["nama", "lat", "lon"]]], ignore_index=True)
