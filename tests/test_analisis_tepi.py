@@ -46,3 +46,9 @@ def test_pelabuhan_terdekat_kapal_tanpa_koordinat_tidak_diberi_nama():
     assert nama.iloc[0] == "A"
     assert nama.iloc[1] is None
     assert np.isnan(jarak.iloc[1])
+
+
+def test_label_lokasi_koordinat_kosong():
+    assert analisis.label_lokasi(np.nan, 103.8, PELABUHAN_UJI) == "Lokasi tidak diketahui"
+    assert analisis.label_lokasi(None, None, PELABUHAN_UJI) == "Lokasi tidak diketahui"
+    assert analisis.label_lokasi(1.0, 103.0, PELABUHAN_UJI) == "Dekat A (0 km)"
