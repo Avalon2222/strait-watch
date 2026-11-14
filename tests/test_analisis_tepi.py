@@ -34,3 +34,15 @@ def test_hitung_unik_kolom_tidak_ada_dan_batas_teratas():
     df = pd.DataFrame({"mmsi": ["1", "2", "3"], "bendera": ["A", "B", "C"]})
     assert analisis.hitung_unik(df, "kolom_aneh").empty
     assert len(analisis.hitung_unik(df, "bendera", teratas=2)) == 2
+
+
+PELABUHAN_UJI = pd.DataFrame({"nama": ["A", "B"], "lat": [1.0, 2.0], "lon": [103.0, 104.0],
+                              "jenis": ["pelabuhan", "pelabuhan"]})
+
+
+def test_pelabuhan_terdekat_kapal_tanpa_koordinat_tidak_diberi_nama():
+    df = pd.DataFrame({"lat": [1.2, np.nan], "lon": [103.8, np.nan]})
+    nama, jarak = analisis.pelabuhan_terdekat(df, PELABUHAN_UJI)
+    assert nama.iloc[0] == "A"
+    assert nama.iloc[1] is None
+    assert np.isnan(jarak.iloc[1])
