@@ -52,3 +52,12 @@ def test_label_lokasi_koordinat_kosong():
     assert analisis.label_lokasi(np.nan, 103.8, PELABUHAN_UJI) == "Lokasi tidak diketahui"
     assert analisis.label_lokasi(None, None, PELABUHAN_UJI) == "Lokasi tidak diketahui"
     assert analisis.label_lokasi(1.0, 103.0, PELABUHAN_UJI) == "Dekat A (0 km)"
+
+
+def test_grid_kepadatan_tolak_ukuran_sel_nol_atau_negatif():
+    import pytest
+
+    df = pd.DataFrame({"lat": [1.2], "lon": [103.8], "mmsi": ["525000001"]})
+    for ukuran in (0, -0.25, float("nan")):
+        with pytest.raises(ValueError, match="ukuran_deg"):
+            analisis.grid_kepadatan(df, ukuran)
