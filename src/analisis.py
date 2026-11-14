@@ -158,6 +158,8 @@ def ringkasan(df: pd.DataFrame) -> dict:
 
 def grid_kepadatan(df: pd.DataFrame, ukuran_deg: float = 0.25) -> pd.DataFrame:
     """Membagi laut menjadi sel persegi dan menghitung posisi serta kapal unik per sel."""
+    if not ukuran_deg > 0:
+        raise ValueError(f"ukuran_deg harus lebih dari 0, dapat {ukuran_deg}")
     if df.empty:
         return pd.DataFrame(columns=["lat_tengah", "lon_tengah", "titik", "kapal"])
     g = df[["lat", "lon", "mmsi"]].dropna().copy()
