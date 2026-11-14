@@ -75,8 +75,11 @@ def pelabuhan_terdekat(df: pd.DataFrame, pelabuhan: pd.DataFrame) -> tuple[pd.Se
         for _, p in hanya_pelabuhan.iterrows()
     ])
     idx = jarak.argmin(axis=1)
-    nama = hanya_pelabuhan["nama"].to_numpy()[idx]
-    return pd.Series(nama, index=df.index), pd.Series(jarak[np.arange(len(df)), idx], index=df.index).round(1)
+    nama = hanya_pelabuhan["nama"].to_numpy()[idx].astype(object)
+    # Kapal tanpa koordinat: argmin dari baris NaN selalu 0, jadi jangan beri nama pelabuhan pertama.
+    tanpa_posisi = np.isnan(jarak).all(axis=1)
+    nama[tanpa_posisi] = None
+    return pd.Series(nama, index=df.index, dtype=object), pd.Series(jarak[np.arange(len(df)), idx], index=df.index).round(1)
 
 
 def perkaya(df: pd.DataFrame, pelabuhan: pd.DataFrame | None = None) -> pd.DataFrame:
