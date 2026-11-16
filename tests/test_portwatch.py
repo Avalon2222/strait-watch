@@ -27,6 +27,14 @@ def test_rapikan():
     assert portwatch.rapikan(pd.DataFrame()).empty
 
 
+def test_rapikan_tanpa_portname_untuk_port_tak_dikenal():
+    baris = [{"date": "2025-01-01", "portid": "chokepoint99", "n_tanker": 1, "n_container": 0,
+              "n_dry_bulk": 0, "n_general_cargo": 0, "n_roro": 0, "n_total": 1,
+              "capacity": 1, "capacity_tanker": 1}]
+    d = portwatch.rapikan(pd.DataFrame(baris))
+    assert d.iloc[0]["selat"] == "chokepoint99"
+
+
 def test_rapikan_buang_duplikat():
     d = data_buatan(3)
     dobel = pd.concat([d, d]).rename(columns={"tanggal": "date"})
