@@ -62,6 +62,14 @@ def test_bandingkan():
     assert b.set_index("selat").loc["Selat Sunda", "alki"] == "ALKI I"
 
 
+def test_bandingkan_selat_sepi_tidak_inf():
+    d = data_buatan(30)
+    d.loc[d["portid"] == "chokepoint19", ["n_total", "n_tanker"]] = 0
+    b = portwatch.bandingkan(d, 30).set_index("selat")
+    assert pd.isna(b.loc["Selat Sunda", "persen_tanker"])
+    assert not np.isinf(b["persen_tanker"].fillna(0)).any()
+
+
 def test_anomali_menemukan_lonjakan():
     a = portwatch.anomali(data_buatan(), "chokepoint5")
     assert len(a) == 1
