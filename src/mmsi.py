@@ -217,7 +217,10 @@ def nama_tipe(kode: int | float | None) -> str:
     """Nama tipe yang lebih rinci, misalnya 'Tanker (kargo berbahaya kategori A)'."""
     if kode is None or kode != kode:
         return TIDAK_DIKETAHUI
-    k = int(kode)
+    try:
+        k = int(kode)
+    except (TypeError, ValueError):
+        return TIDAK_DIKETAHUI
     if k in NAMA_TIPE:
         return NAMA_TIPE[k]
     kategori = kategori_tipe(k)
