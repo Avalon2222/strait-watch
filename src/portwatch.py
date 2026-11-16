@@ -112,7 +112,10 @@ def rapikan(df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(columns=KOLOM)
     d = df.rename(columns={"date": "tanggal"}).copy()
     d["tanggal"] = pd.to_datetime(d["tanggal"])
-    d["selat"] = d["portid"].map(lambda p: SELAT.get(p, {}).get("nama")).fillna(d.get("portname"))
+    d["selat"] = d["portid"].map(lambda p: SELAT.get(p, {}).get("nama"))
+    if "portname" in d:  # respons tanpa portname: fillna(None) akan melempar ValueError
+        d["selat"] = d["selat"].fillna(d["portname"])
+    d["selat"] = d["selat"].fillna(d["portid"])
     for k in [*KOLOM_JENIS, "n_total", "capacity", "capacity_tanker"]:
         d[k] = pd.to_numeric(d[k], errors="coerce")
     return d[KOLOM].sort_values(["tanggal", "portid"]).drop_duplicates(["tanggal", "portid"]).reset_index(drop=True)
