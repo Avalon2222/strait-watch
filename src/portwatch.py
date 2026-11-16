@@ -166,7 +166,8 @@ def bandingkan(df: pd.DataFrame, hari_terakhir: int = 365) -> pd.DataFrame:
     batas = df["tanggal"].max() - pd.Timedelta(days=hari_terakhir - 1)
     d = df[df["tanggal"] >= batas]
     g = d.groupby(["portid", "selat"]).agg(rata_harian=("n_total", "mean"), tanker_harian=("n_tanker", "mean")).reset_index()
-    g["persen_tanker"] = (100 * g["tanker_harian"] / g["rata_harian"]).round(1)
+    # Selat yang sedang sepi total (rata 0) jangan menghasilkan inf/NaN di tabel.
+    g["persen_tanker"] = (100 * g["tanker_harian"] / g["rata_harian"].where(g["rata_harian"] > 0)).round(1)
     g["rata_harian"] = g["rata_harian"].round(1)
     g["tanker_harian"] = g["tanker_harian"].round(1)
     g["grup"] = g["portid"].map(lambda p: SELAT.get(p, {}).get("grup", "-"))
