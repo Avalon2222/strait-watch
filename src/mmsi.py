@@ -127,9 +127,18 @@ AWALAN_KHUSUS: dict[str, str] = {
 }
 
 
+def _teks_mmsi(mmsi: int | float | str | None) -> str:
+    """MMSI sebagai teks digit. Float bulat dari kolom pandas (525012345.0) ikut dikenali."""
+    if isinstance(mmsi, float):
+        if mmsi != mmsi or not mmsi.is_integer():  # NaN atau pecahan
+            return ""
+        return str(int(mmsi))
+    return str(mmsi or "").strip()
+
+
 def jenis_mmsi(mmsi: int | str | None) -> str:
     """Membedakan MMSI kapal dari stasiun pantai, pelampung navigasi, atau pemancar darurat."""
-    s = str(mmsi or "").strip()
+    s = _teks_mmsi(mmsi)
     if not s.isdigit() or len(s) != 9:
         return TIDAK_DIKETAHUI
     for awalan in ("970", "972", "974", "111", "00", "99", "98", "0"):
@@ -140,7 +149,7 @@ def jenis_mmsi(mmsi: int | str | None) -> str:
 
 def negara_bendera(mmsi: int | str | None) -> str:
     """Negara bendera dari tiga digit pertama MMSI; MMSI khusus dan tidak valid menjadi 'Tidak diketahui'."""
-    s = str(mmsi or "").strip()
+    s = _teks_mmsi(mmsi)
     if not s.isdigit() or len(s) != 9 or jenis_mmsi(s) != "Kapal":
         return TIDAK_DIKETAHUI
     return MID_NEGARA.get(int(s[:3]), TIDAK_DIKETAHUI)
