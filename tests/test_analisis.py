@@ -133,6 +133,15 @@ def test_pusat_dan_zoom():
     assert peta.pusat_dan_zoom(df.iloc[0:0]) == (peta.PUSAT_SELAT, peta.ZOOM_AWAL)
 
 
+def test_pusat_dan_zoom_lon_kosong():
+    from src import peta
+    df = pd.DataFrame({"lat": [1.2, 1.3], "lon": [float("nan"), float("nan")]})
+    assert peta.pusat_dan_zoom(df) == (peta.PUSAT_SELAT, peta.ZOOM_AWAL)
+    campur = pd.DataFrame({"lat": [1.2, float("nan"), 1.3], "lon": [103.7, 103.8, float("nan")]})
+    (la, lo), _ = peta.pusat_dan_zoom(campur)
+    assert (la, lo) == (1.2, 103.7)
+
+
 def test_haversine_vektor_acuan_berupa_array():
     lat = np.array([1.0, 2.0, 3.0])
     lon = np.array([100.0, 101.0, 102.0])

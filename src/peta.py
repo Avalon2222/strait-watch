@@ -209,9 +209,12 @@ def pusat_dan_zoom(df: pd.DataFrame, lebar_px: int = 900, tinggi_px: int = 560,
     ``r`` derajat bujur muat di ``lebar_px`` piksel bila 2^z ≤ lebar_px·360 / (256·r).
     Kapal di luar bingkai tetap ada di peta dan terlihat saat diperkecil. Tanpa data, kembali ke tampilan seluruh selat.
     """
-    if df.empty or df["lat"].dropna().empty:
+    # Ambil hanya baris yang lat DAN lon-nya terisi; kalau lon kosong semua sementara lat ada,
+    # kuantil lon jadi NaN dan math.floor(NaN) melempar ValueError.
+    lengkap = df[["lat", "lon"]].dropna() if not df.empty else df
+    if lengkap.empty:
         return PUSAT_SELAT, ZOOM_AWAL
-    lat, lon = df["lat"].dropna(), df["lon"].dropna()
+    lat, lon = lengkap["lat"], lengkap["lon"]
     la0, la1 = lat.quantile(0.10), lat.quantile(0.90)
     lo0, lo1 = lon.quantile(0.10), lon.quantile(0.90)
     r_lat = max(la1 - la0, min_rentang) * 1.25
