@@ -17,7 +17,8 @@ def test_negara_bendera_dikenal(nomor, negara):
     assert mmsi.negara_bendera(nomor) == negara
 
 
-@pytest.mark.parametrize("nomor", ["002570100", "992571234", "970123456", "12345", "", None, "abc123456", "123456789"])
+@pytest.mark.parametrize("nomor", ["002570100", "992571234", "970123456", "12345", "", None, "abc123456", "123456789",
+                                   float("nan"), 525019001.5])
 def test_negara_bendera_tidak_diketahui(nomor):
     assert mmsi.negara_bendera(nomor) == mmsi.TIDAK_DIKETAHUI
 
@@ -68,3 +69,18 @@ def test_status_navigasi():
     assert mmsi.status_navigasi(99) == "Tidak tersedia"
     assert mmsi.status_navigasi(None) == "Tidak tersedia"
     assert mmsi.status_navigasi(float("nan")) == "Tidak tersedia"
+
+
+def test_mmsi_float_dari_kolom_pandas():
+    import pandas as pd
+
+    kolom = pd.Series([525019001, None, 563001234])  # NaN membuat kolom jadi float64
+    assert kolom.dtype == "float64"
+    assert [mmsi.negara_bendera(m) for m in kolom] == ["Indonesia", mmsi.TIDAK_DIKETAHUI, "Singapura"]
+    assert mmsi.jenis_mmsi(970123456.0) == "Pemancar SAR (AIS-SART)"
+
+
+def test_nama_tipe_kode_tidak_valid():
+    assert mmsi.nama_tipe("bukan angka") == mmsi.TIDAK_DIKETAHUI
+    assert mmsi.nama_tipe(float("nan")) == mmsi.TIDAK_DIKETAHUI
+    assert mmsi.nama_tipe("80") == "Tanker"
