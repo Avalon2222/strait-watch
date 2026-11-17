@@ -90,3 +90,17 @@ def test_mmsi_awalan_8_radio_genggam_bukan_kapal():
     # ITU-R M.585: 8 + MID + 5 digit dipakai radio VHF genggam, bukan identitas kapal.
     assert mmsi.jenis_mmsi("852512345") == "Radio VHF genggam"
     assert mmsi.negara_bendera("852512345") == mmsi.TIDAK_DIKETAHUI
+
+
+def test_kolom_int64_nullable_dan_tak_hingga_tidak_bikin_error():
+    import pandas as pd
+
+    kode = pd.Series([70, pd.NA], dtype="Int64")
+    assert kode.map(mmsi.kategori_tipe).tolist() == ["Kargo", mmsi.TIDAK_DIKETAHUI]
+    assert kode.map(mmsi.nama_tipe).tolist() == ["Kargo", mmsi.TIDAK_DIKETAHUI]
+    assert pd.Series([1, pd.NA], dtype="Int64").map(mmsi.status_navigasi).tolist() == [
+        "Berlabuh jangkar", "Tidak tersedia"]
+    assert mmsi.jenis_mmsi(pd.NA) == mmsi.TIDAK_DIKETAHUI
+    assert mmsi.negara_bendera(pd.NA) == mmsi.TIDAK_DIKETAHUI
+    assert mmsi.kategori_tipe(float("inf")) == mmsi.TIDAK_DIKETAHUI
+    assert mmsi.status_navigasi(float("-inf")) == "Tidak tersedia"
