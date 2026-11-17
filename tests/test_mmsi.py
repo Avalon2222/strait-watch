@@ -84,3 +84,9 @@ def test_nama_tipe_kode_tidak_valid():
     assert mmsi.nama_tipe("bukan angka") == mmsi.TIDAK_DIKETAHUI
     assert mmsi.nama_tipe(float("nan")) == mmsi.TIDAK_DIKETAHUI
     assert mmsi.nama_tipe("80") == "Tanker"
+
+
+def test_mmsi_awalan_8_radio_genggam_bukan_kapal():
+    # ITU-R M.585: 8 + MID + 5 digit dipakai radio VHF genggam, bukan identitas kapal.
+    assert mmsi.jenis_mmsi("852512345") == "Radio VHF genggam"
+    assert mmsi.negara_bendera("852512345") == mmsi.TIDAK_DIKETAHUI
