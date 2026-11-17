@@ -6,6 +6,8 @@ dan ITU-R M.1371 (tipe kapal dan status navigasi), bukan dari basis data registr
 
 from __future__ import annotations
 
+import pandas as pd
+
 TIDAK_DIKETAHUI = "Tidak diketahui"
 
 # Tiga digit pertama MMSI (MID) menunjukkan negara yang mengeluarkan identitas kapal.
@@ -128,8 +130,20 @@ AWALAN_KHUSUS: dict[str, str] = {
 }
 
 
+def _kode_int(kode) -> int | None:
+    """Kode AIS menjadi int; None, NaN, pd.NA (kolom Int64), tak hingga, dan teks aneh menjadi None."""
+    if kode is None or kode is pd.NA:
+        return None
+    try:
+        return int(kode)
+    except (TypeError, ValueError, OverflowError):  # NaN -> ValueError, inf -> OverflowError
+        return None
+
+
 def _teks_mmsi(mmsi: int | float | str | None) -> str:
     """MMSI sebagai teks digit. Float bulat dari kolom pandas (525012345.0) ikut dikenali."""
+    if mmsi is None or mmsi is pd.NA:
+        return ""
     if isinstance(mmsi, float):
         if mmsi != mmsi or not mmsi.is_integer():  # NaN atau pecahan
             return ""
@@ -198,13 +212,8 @@ NAMA_TIPE: dict[int, str] = {
 
 def kategori_tipe(kode: int | float | None) -> str:
     """Kode tipe kapal AIS (0-99) menjadi kategori ringkas untuk legenda."""
-    if kode is None or kode != kode:  # None atau NaN
-        return TIDAK_DIKETAHUI
-    try:
-        k = int(kode)
-    except (TypeError, ValueError):
-        return TIDAK_DIKETAHUI
-    if k <= 0:
+    k = _kode_int(kode)
+    if k is None or k <= 0:
         return TIDAK_DIKETAHUI
     if k in KODE_TUNGGAL:
         return KODE_TUNGGAL[k]
@@ -216,11 +225,8 @@ def kategori_tipe(kode: int | float | None) -> str:
 
 def nama_tipe(kode: int | float | None) -> str:
     """Nama tipe yang lebih rinci, misalnya 'Tanker (kargo berbahaya kategori A)'."""
-    if kode is None or kode != kode:
-        return TIDAK_DIKETAHUI
-    try:
-        k = int(kode)
-    except (TypeError, ValueError):
+    k = _kode_int(kode)
+    if k is None:
         return TIDAK_DIKETAHUI
     if k in NAMA_TIPE:
         return NAMA_TIPE[k]
@@ -255,9 +261,5 @@ STATUS_NAVIGASI: dict[int, str] = {
 
 
 def status_navigasi(kode: int | float | None) -> str:
-    if kode is None or kode != kode:
-        return STATUS_NAVIGASI[15]
-    try:
-        return STATUS_NAVIGASI.get(int(kode), STATUS_NAVIGASI[15])
-    except (TypeError, ValueError):
-        return STATUS_NAVIGASI[15]
+    k = _kode_int(kode)
+    return STATUS_NAVIGASI[15] if k is None else STATUS_NAVIGASI.get(k, STATUS_NAVIGASI[15])
