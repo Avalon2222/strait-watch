@@ -124,6 +124,7 @@ AWALAN_KHUSUS: dict[str, str] = {
     "970": "Pemancar SAR (AIS-SART)",
     "972": "Pemancar MOB",
     "974": "EPIRB-AIS",
+    "8": "Radio VHF genggam",
 }
 
 
@@ -141,7 +142,7 @@ def jenis_mmsi(mmsi: int | str | None) -> str:
     s = _teks_mmsi(mmsi)
     if not s.isdigit() or len(s) != 9:
         return TIDAK_DIKETAHUI
-    for awalan in ("970", "972", "974", "111", "00", "99", "98", "0"):
+    for awalan in ("970", "972", "974", "111", "00", "99", "98", "0", "8"):
         if s.startswith(awalan):
             return AWALAN_KHUSUS[awalan]
     return "Kapal"
