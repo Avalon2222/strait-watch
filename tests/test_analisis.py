@@ -193,3 +193,9 @@ def test_pelabuhan_terdekat_abaikan_pelabuhan_tanpa_koordinat():
     assert nama.iloc[0] == "Singapura" and jarak.iloc[0] == 0.0
     nama, jarak = analisis.pelabuhan_terdekat(kapal, pelabuhan.iloc[[0]])
     assert nama.iloc[0] is None and np.isnan(jarak.iloc[0])
+
+
+def test_hitung_unik_teratas_nol_kosong():
+    df = pd.DataFrame({"mmsi": ["1", "2", "3"], "bendera": ["Indonesia", "Singapura", "Indonesia"]})
+    assert analisis.hitung_unik(df, "bendera", 0).empty
+    assert len(analisis.hitung_unik(df, "bendera")) == 2

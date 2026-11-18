@@ -139,7 +139,8 @@ def hitung_unik(df: pd.DataFrame, kolom: str, teratas: int | None = None) -> pd.
     g = g.sort_values(["kapal", kolom], ascending=[False, True]).reset_index(drop=True)
     total = max(int(df["mmsi"].nunique()), 1)
     g["persen"] = (100 * g["kapal"] / total).round(1)
-    return g.head(teratas) if teratas else g
+    # teratas=0 berarti nol baris; hanya None yang berarti tanpa batas.
+    return g if teratas is None else g.head(max(teratas, 0))
 
 
 def ringkasan(df: pd.DataFrame) -> dict:
