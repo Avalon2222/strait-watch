@@ -184,5 +184,8 @@ def anomali(df: pd.DataFrame, portid: str, jendela: int = 28, ambang: float = 2.
     if len(d) < jendela + 1:
         return d.iloc[0:0].assign(z=pd.Series(dtype=float))
     acuan = d["n_total"].shift(1).rolling(jendela, min_periods=jendela)
-    d["z"] = ((d["n_total"] - acuan.mean()) / acuan.std()).round(2)
+    # Kalau 28 hari acuan isinya sama persis, std = 0 dan z jadi tak hingga (tampil "inf" di tabel).
+    # Jumlah kapal adalah bilangan bulat, jadi simpangan minimal dianggap 1 kapal.
+    std = acuan.std().clip(lower=1.0)
+    d["z"] = ((d["n_total"] - acuan.mean()) / std).round(2)
     return d[d["z"].abs() >= ambang][["tanggal", "selat", "n_total", "n_tanker", "z"]].reset_index(drop=True)
