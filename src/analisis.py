@@ -42,9 +42,10 @@ def haversine_vektor(lat: np.ndarray, lon: np.ndarray, lat0, lon0) -> np.ndarray
 
 def fase_pelayaran(sog_knot, status_kode=None) -> str:
     """Fase dari kecepatan (SOG) dan, bila ada, status navigasi yang dilaporkan kapal."""
-    if status_kode is not None and status_kode == status_kode:
+    # pd.isna menangkap None, NaN, dan pd.NA; perbandingan langsung dengan pd.NA melempar TypeError.
+    if not pd.isna(status_kode):
         try:
-            s = int(status_kode)
+            s = int(float(status_kode))
         except (TypeError, ValueError):
             s = 15
         if s == 1:
@@ -53,7 +54,11 @@ def fase_pelayaran(sog_knot, status_kode=None) -> str:
             return "Tertambat"
         if s == 7:
             return "Menangkap ikan"
-    if sog_knot is None or sog_knot != sog_knot:
+    try:
+        sog_knot = float(sog_knot)
+    except (TypeError, ValueError):
+        return "Tidak diketahui"
+    if math.isnan(sog_knot):
         return "Tidak diketahui"
     if sog_knot < AMBANG_DIAM:
         return "Diam"

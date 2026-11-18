@@ -175,3 +175,11 @@ def test_kapal_di_sekitar_tepat_di_luar_radius_tidak_masuk():
     assert 25.0 < jarak < 25.05
     sekitar = analisis.kapal_di_sekitar(df, 0.0, 100.0, 25)
     assert list(sekitar["mmsi"]) == ["2"]
+
+
+def test_fase_pelayaran_pd_na_dan_teks():
+    assert analisis.fase_pelayaran(pd.NA, None) == "Tidak diketahui"
+    assert analisis.fase_pelayaran(3.0, pd.NA) == "Lambat"
+    assert analisis.fase_pelayaran("12.5", "0") == "Berlayar"
+    assert analisis.fase_pelayaran("x", None) == "Tidak diketahui"
+    assert analisis.fase_pelayaran(0.0, "1.0") == "Berlabuh jangkar"
