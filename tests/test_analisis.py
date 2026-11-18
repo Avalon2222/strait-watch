@@ -183,3 +183,13 @@ def test_fase_pelayaran_pd_na_dan_teks():
     assert analisis.fase_pelayaran("12.5", "0") == "Berlayar"
     assert analisis.fase_pelayaran("x", None) == "Tidak diketahui"
     assert analisis.fase_pelayaran(0.0, "1.0") == "Berlabuh jangkar"
+
+
+def test_pelabuhan_terdekat_abaikan_pelabuhan_tanpa_koordinat():
+    kapal = pd.DataFrame({"lat": [1.26], "lon": [103.84]})
+    pelabuhan = pd.DataFrame({"nama": ["Rusak", "Singapura", "Port Klang"], "jenis": ["pelabuhan"] * 3,
+                              "lat": [np.nan, 1.26, 3.0], "lon": [np.nan, 103.84, 101.4]})
+    nama, jarak = analisis.pelabuhan_terdekat(kapal, pelabuhan)
+    assert nama.iloc[0] == "Singapura" and jarak.iloc[0] == 0.0
+    nama, jarak = analisis.pelabuhan_terdekat(kapal, pelabuhan.iloc[[0]])
+    assert nama.iloc[0] is None and np.isnan(jarak.iloc[0])
