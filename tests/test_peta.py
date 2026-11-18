@@ -143,3 +143,15 @@ def test_tooltip_pelabuhan_dan_titik_kunci_di_escape():
     html = _render(m)
     assert "Dermaga <A&B>" not in html and "Selat <X>" not in html
     assert "Dermaga &lt;A&amp;B&gt;" in html
+
+
+def test_popup_aman_untuk_pd_na():
+    b = pd.Series({
+        "mmsi": "525000001", "label": pd.NA, "nama": "KM UJI", "bendera": "Indonesia", "tipe": "Kargo",
+        "tujuan": pd.NA, "sog_knot": pd.NA, "cog": 90.0, "imo": pd.NA, "panjang_m": pd.NA,
+        "status_nav": "Berlayar", "fase": "Berlayar",
+    }, dtype=object)
+    teks = peta.popup_kapal(b)
+    assert "KM UJI" in teks
+    assert "<td>IMO</td>" not in teks
+    assert "Kecepatan</td><td>- (-)" in teks

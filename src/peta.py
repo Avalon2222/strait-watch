@@ -58,8 +58,20 @@ def ikon_kapal(warna: str, arah: float | None, ukuran: int = 16, garis: str = "#
     return folium.DivIcon(html=svg, icon_size=(ukuran, ukuran), icon_anchor=(ukuran // 2, ukuran // 2))
 
 
+def _kosong(v) -> bool:
+    """None, NaN, pd.NA, NaT, atau teks kosong. `pd.NA == ""` bernilai NA dan bikin `or` melempar TypeError."""
+    if v is None:
+        return True
+    try:
+        if pd.isna(v):
+            return True
+    except (TypeError, ValueError):
+        return False
+    return isinstance(v, str) and v.strip() == ""
+
+
 def _teks(v, satuan: str = "", desimal: int = 0) -> str:
-    if v is None or (isinstance(v, float) and pd.isna(v)) or v == "":
+    if _kosong(v):
         return "-"
     try:
         return f"{float(v):,.{desimal}f}{satuan}"
@@ -69,7 +81,7 @@ def _teks(v, satuan: str = "", desimal: int = 0) -> str:
 
 def _isi(v):
     """Nilai apa adanya, atau None kalau kosong/NaN (NaN itu truthy, jadi `or` biasa tidak cukup)."""
-    if v is None or (isinstance(v, float) and pd.isna(v)) or str(v).strip() == "":
+    if _kosong(v):
         return None
     return v
 
@@ -86,10 +98,10 @@ def popup_kapal(b: pd.Series) -> str:
         if pelabuhan else ""
     )
     dimensi = ""
-    if b.get("panjang_m") and not pd.isna(b.get("panjang_m")):
+    if _isi(b.get("panjang_m")):
         dimensi = f"<tr><td>Ukuran</td><td>{_teks(b.get('panjang_m'), ' m')} × {_teks(b.get('lebar_m'), ' m')}, sarat {_teks(b.get('sarat_m'), ' m', 1)}</td></tr>"
-    imo = b.get("imo")
-    baris_imo = f"<tr><td>IMO</td><td>{int(imo)}</td></tr>" if imo and not pd.isna(imo) else ""
+    imo = _isi(b.get("imo"))
+    baris_imo = f"<tr><td>IMO</td><td>{html.escape(str(int(imo)) if isinstance(imo, (int, float)) else str(imo))}</td></tr>" if imo else ""
     return f"""
     <div style="font-family: system-ui, sans-serif; font-size: 13px; min-width: 230px;">
       <div style="font-size: 16px; font-weight: 700;">{label}</div>
