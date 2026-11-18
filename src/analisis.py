@@ -75,6 +75,12 @@ def pelabuhan_terdekat(df: pd.DataFrame, pelabuhan: pd.DataFrame) -> tuple[pd.Se
     hanya_pelabuhan = pelabuhan[pelabuhan["jenis"] == "pelabuhan"] if "jenis" in pelabuhan else pelabuhan
     if hanya_pelabuhan.empty:
         hanya_pelabuhan = pelabuhan
+    # Pelabuhan tanpa koordinat dibuang: argmin menunjuk kolom NaN pertama, sehingga pelabuhan
+    # itu akan jadi "terdekat" untuk semua kapal.
+    hanya_pelabuhan = hanya_pelabuhan.dropna(subset=["lat", "lon"])
+    if hanya_pelabuhan.empty:
+        kosong = pd.Series([None] * len(df), index=df.index, dtype=object)
+        return kosong, pd.Series([np.nan] * len(df), index=df.index, dtype=float)
     jarak = np.column_stack([
         haversine_vektor(df["lat"].to_numpy(), df["lon"].to_numpy(), float(p["lat"]), float(p["lon"]))
         for _, p in hanya_pelabuhan.iterrows()
