@@ -93,3 +93,9 @@ def test_snapshot_repo_valid():
     assert set(df["portid"]) <= set(portwatch.SELAT)
     assert (df["n_total"] >= 0).all()
     assert not df.duplicated(["portid", "tanggal"]).any()
+
+
+def test_anomali_tidak_menghasilkan_z_tak_hingga():
+    a = portwatch.anomali(data_buatan(), "chokepoint5")
+    assert np.isfinite(a["z"]).all()
+    assert a.iloc[0]["z"] == 60.0
