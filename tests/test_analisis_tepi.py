@@ -61,3 +61,8 @@ def test_grid_kepadatan_tolak_ukuran_sel_nol_atau_negatif():
     for ukuran in (0, -0.25, float("nan")):
         with pytest.raises(ValueError, match="ukuran_deg"):
             analisis.grid_kepadatan(df, ukuran)
+
+
+def test_label_lokasi_lewati_titik_kunci_tanpa_koordinat():
+    titik = pd.DataFrame({"nama": ["Tanpa Koordinat", "B"], "lat": [np.nan, 1.5], "lon": [np.nan, 103.5]})
+    assert analisis.label_lokasi(1.5, 103.5, PELABUHAN_UJI, titik) == "Dekat B (0 km)"

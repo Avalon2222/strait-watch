@@ -178,6 +178,8 @@ def label_lokasi(lat: float, lon: float, pelabuhan: pd.DataFrame, titik_kunci: p
     acuan = pelabuhan[["nama", "lat", "lon"]]
     if titik_kunci is not None and not titik_kunci.empty:
         acuan = pd.concat([acuan, titik_kunci[["nama", "lat", "lon"]]], ignore_index=True)
+    # Titik acuan tanpa koordinat dibuang; argmin menunjuk NaN pertama kalau ikut dihitung.
+    acuan = acuan.dropna(subset=["lat", "lon"])
     if acuan.empty:
         return f"{lat:.2f}, {lon:.2f}"
     jarak = haversine_vektor(acuan["lat"].to_numpy(), acuan["lon"].to_numpy(), lat, lon)
