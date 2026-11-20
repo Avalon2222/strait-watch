@@ -115,3 +115,10 @@ def test_tren_jendela_berbasis_kalender_saat_ada_hari_bolong():
     t = portwatch.tren(df, "chokepoint5", jendela=4)
     # 2 Maret hanya dirata-rata dengan 1-2 Maret, bukan dengan hari-hari Januari (dulu hasilnya 55).
     assert t["rata_bergerak"].iloc[-1] == 10.0
+
+
+def test_rapikan_kolom_jenis_hilang_diisi_nan():
+    d = portwatch.rapikan(pd.DataFrame([{"date": "2025-01-01", "portid": "chokepoint5", "n_tanker": 5, "n_total": 9}]))
+    assert list(d.columns) == portwatch.KOLOM
+    assert d.loc[0, "n_tanker"] == 5 and d.loc[0, "n_total"] == 9
+    assert np.isnan(d.loc[0, "n_roro"]) and np.isnan(d.loc[0, "capacity"])
