@@ -107,3 +107,11 @@ def test_rapikan_tanggal_epoch_milidetik_arcgis():
               "capacity": 0, "capacity_tanker": 0}]
     d = portwatch.rapikan(pd.DataFrame(baris))
     assert d.loc[0, "tanggal"] == pd.Timestamp("2025-01-01")
+
+
+def test_tren_jendela_berbasis_kalender_saat_ada_hari_bolong():
+    tanggal = list(pd.date_range("2025-01-01", periods=4, freq="D")) + list(pd.date_range("2025-03-01", periods=2, freq="D"))
+    df = pd.DataFrame({"tanggal": tanggal, "portid": "chokepoint5", "n_total": [100.0] * 4 + [10.0] * 2})
+    t = portwatch.tren(df, "chokepoint5", jendela=4)
+    # 2 Maret hanya dirata-rata dengan 1-2 Maret, bukan dengan hari-hari Januari (dulu hasilnya 55).
+    assert t["rata_bergerak"].iloc[-1] == 10.0
