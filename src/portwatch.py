@@ -111,7 +111,13 @@ def rapikan(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return pd.DataFrame(columns=KOLOM)
     d = df.rename(columns={"date": "tanggal"}).copy()
-    d["tanggal"] = pd.to_datetime(d["tanggal"])
+    # Field Date ArcGIS dikirim sebagai epoch milidetik; tanpa unit="ms" angka itu dibaca sebagai
+    # nanodetik dan semua tanggal jatuh di 1970 (lalu terbuang oleh filter `sejak`).
+    angka = pd.to_numeric(d["tanggal"], errors="coerce")
+    if angka.notna().all():
+        d["tanggal"] = pd.to_datetime(angka, unit="ms")
+    else:
+        d["tanggal"] = pd.to_datetime(d["tanggal"])
     d["selat"] = d["portid"].map(lambda p: SELAT.get(p, {}).get("nama"))
     if "portname" in d:  # respons tanpa portname: fillna(None) akan melempar ValueError
         d["selat"] = d["selat"].fillna(d["portname"])

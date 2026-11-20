@@ -99,3 +99,11 @@ def test_anomali_tidak_menghasilkan_z_tak_hingga():
     a = portwatch.anomali(data_buatan(), "chokepoint5")
     assert np.isfinite(a["z"]).all()
     assert a.iloc[0]["z"] == 60.0
+
+
+def test_rapikan_tanggal_epoch_milidetik_arcgis():
+    baris = [{"date": 1735689600000, "portid": "chokepoint5", "portname": "Malacca Strait", "n_tanker": 1,
+              "n_container": 2, "n_dry_bulk": 0, "n_general_cargo": 0, "n_roro": 0, "n_total": 3,
+              "capacity": 0, "capacity_tanker": 0}]
+    d = portwatch.rapikan(pd.DataFrame(baris))
+    assert d.loc[0, "tanggal"] == pd.Timestamp("2025-01-01")
