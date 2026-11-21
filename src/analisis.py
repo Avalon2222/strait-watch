@@ -110,8 +110,12 @@ def perkaya(df: pd.DataFrame, pelabuhan: pd.DataFrame | None = None) -> pd.DataF
     d["fase"] = [fase_pelayaran(s, k) for s, k in zip(d["sog_knot"], d.get("status_nav_kode", pd.Series([None] * len(d))))]
     d["kecepatan_kmh"] = (pd.to_numeric(d["sog_knot"], errors="coerce") * KNOT_KE_KMH).round(1)
     # Arah ikon: COG (arah gerak) lebih dipercaya saat kapal bergerak; heading saat diam.
+    # Di luar 0-359 berarti "tidak tersedia" (COG 360, heading 511) menurut standar AIS,
+    # misalnya dari CSV mentah yang belum melewati urai_posisi; jangan dipakai sebagai arah.
     cog = pd.to_numeric(d["cog"], errors="coerce")
+    cog = cog.where((cog >= 0) & (cog < 360))
     hdg = pd.to_numeric(d["heading"], errors="coerce")
+    hdg = hdg.where((hdg >= 0) & (hdg < 360))
     bergerak = pd.to_numeric(d["sog_knot"], errors="coerce").fillna(0) >= AMBANG_DIAM
     d["arah"] = np.where(bergerak & cog.notna(), cog, hdg.where(hdg.notna(), cog))
     nama = d["nama"].fillna("").astype(str).str.strip()
