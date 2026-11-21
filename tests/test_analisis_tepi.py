@@ -74,3 +74,12 @@ def test_perkaya_heading_511_dan_cog_360_bukan_arah():
     d = analisis.perkaya(df)
     assert pd.isna(d.loc[0, "arah"])
     assert d.loc[1, "arah"] == 90.0
+
+
+def test_perkaya_mmsi_float_dirapikan():
+    df = pd.DataFrame({"mmsi": [525001234.0, np.nan], "lat": [1.0, 1.0], "lon": [103.0, 103.0],
+                       "sog_knot": [0.0, 0.0], "cog": [10.0, 10.0], "heading": [np.nan, np.nan], "nama": ["", ""]})
+    d = analisis.perkaya(df)
+    assert list(d["mmsi"]) == ["525001234", ""]
+    assert list(d["label"]) == ["MMSI 525001234", "Tanpa MMSI"]
+    assert d.loc[0, "bendera"] == "Indonesia"
