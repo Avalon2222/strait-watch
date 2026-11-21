@@ -148,7 +148,11 @@ def _teks_mmsi(mmsi: int | float | str | None) -> str:
         if mmsi != mmsi or not mmsi.is_integer():  # NaN atau pecahan
             return ""
         return str(int(mmsi))
-    return str(mmsi or "").strip()
+    teks = str(mmsi or "").strip()
+    # Kolom MMSI yang sempat jadi float lalu diubah ke teks berbentuk "525001234.0".
+    if teks.endswith(".0") and teks[:-2].isdigit():
+        teks = teks[:-2]
+    return teks
 
 
 def jenis_mmsi(mmsi: int | str | None) -> str:
