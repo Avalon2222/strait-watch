@@ -101,7 +101,8 @@ def perkaya(df: pd.DataFrame, pelabuhan: pd.DataFrame | None = None) -> pd.DataF
                   "pelabuhan_terdekat", "jarak_pelabuhan_km", "label"):
             d[k] = pd.Series(dtype=object)
         return d
-    d["mmsi"] = d["mmsi"].astype(str)
+    # astype(str) pada kolom float (ada NaN) menghasilkan "525001234.0" dan "nan"; rapikan lewat _teks_mmsi.
+    d["mmsi"] = d["mmsi"].map(km._teks_mmsi)
     d["bendera"] = d["mmsi"].map(km.negara_bendera)
     d["jenis_mmsi"] = d["mmsi"].map(km.jenis_mmsi)
     d["kategori"] = d["tipe_kode"].map(km.kategori_tipe) if "tipe_kode" in d else km.TIDAK_DIKETAHUI
@@ -119,7 +120,7 @@ def perkaya(df: pd.DataFrame, pelabuhan: pd.DataFrame | None = None) -> pd.DataF
     bergerak = pd.to_numeric(d["sog_knot"], errors="coerce").fillna(0) >= AMBANG_DIAM
     d["arah"] = np.where(bergerak & cog.notna(), cog, hdg.where(hdg.notna(), cog))
     nama = d["nama"].fillna("").astype(str).str.strip()
-    d["label"] = nama.where(nama != "", "MMSI " + d["mmsi"])
+    d["label"] = nama.where(nama != "", ("MMSI " + d["mmsi"]).where(d["mmsi"] != "", "Tanpa MMSI"))
     if pelabuhan is not None and not pelabuhan.empty:
         d["pelabuhan_terdekat"], d["jarak_pelabuhan_km"] = pelabuhan_terdekat(d, pelabuhan)
     else:
