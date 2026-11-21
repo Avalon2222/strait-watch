@@ -104,3 +104,9 @@ def test_kolom_int64_nullable_dan_tak_hingga_tidak_bikin_error():
     assert mmsi.negara_bendera(pd.NA) == mmsi.TIDAK_DIKETAHUI
     assert mmsi.kategori_tipe(float("inf")) == mmsi.TIDAK_DIKETAHUI
     assert mmsi.status_navigasi(float("-inf")) == "Tidak tersedia"
+
+
+def test_mmsi_teks_berakhiran_titik_nol():
+    assert mmsi.negara_bendera("525001234.0") == "Indonesia"
+    assert mmsi.jenis_mmsi("525001234.0") == "Kapal"
+    assert mmsi.negara_bendera("525001234.5") == mmsi.TIDAK_DIKETAHUI
