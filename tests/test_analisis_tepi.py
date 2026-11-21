@@ -66,3 +66,11 @@ def test_grid_kepadatan_tolak_ukuran_sel_nol_atau_negatif():
 def test_label_lokasi_lewati_titik_kunci_tanpa_koordinat():
     titik = pd.DataFrame({"nama": ["Tanpa Koordinat", "B"], "lat": [np.nan, 1.5], "lon": [np.nan, 103.5]})
     assert analisis.label_lokasi(1.5, 103.5, PELABUHAN_UJI, titik) == "Dekat B (0 km)"
+
+
+def test_perkaya_heading_511_dan_cog_360_bukan_arah():
+    df = pd.DataFrame({"mmsi": ["525001234", "525001235"], "lat": [1.0, 1.0], "lon": [103.0, 103.0],
+                       "sog_knot": [0.0, 8.0], "cog": [360.0, 360.0], "heading": [511.0, 90.0], "nama": ["A", "B"]})
+    d = analisis.perkaya(df)
+    assert pd.isna(d.loc[0, "arah"])
+    assert d.loc[1, "arah"] == 90.0
