@@ -58,7 +58,7 @@ def test_grid_kepadatan_tolak_ukuran_sel_nol_atau_negatif():
     import pytest
 
     df = pd.DataFrame({"lat": [1.2], "lon": [103.8], "mmsi": ["525000001"]})
-    for ukuran in (0, -0.25, float("nan")):
+    for ukuran in (0, -0.25, float("nan"), float("inf")):
         with pytest.raises(ValueError, match="ukuran_deg"):
             analisis.grid_kepadatan(df, ukuran)
 
