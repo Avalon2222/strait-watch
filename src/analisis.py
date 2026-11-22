@@ -240,7 +240,8 @@ def panjang_jejak_km(jejak: pd.DataFrame, teratas: int = 10) -> pd.DataFrame:
     hasil = seg.groupby("mmsi").agg(label=("label", "last"), kategori=("kategori", "last"),
                                     segmen=("km", "size"), km=("km", "sum")).reset_index()
     hasil["km"] = hasil["km"].round(1)
-    return hasil.sort_values("km", ascending=False).head(teratas).reset_index(drop=True)
+    # head(-n) justru membuang n baris terakhir; batas negatif dianggap nol.
+    return hasil.sort_values("km", ascending=False).head(max(teratas, 0)).reset_index(drop=True)
 
 
 def di_dalam_kotak(df: pd.DataFrame, bbox: dict = BBOX_SELAT) -> pd.DataFrame:
