@@ -199,3 +199,11 @@ def test_hitung_unik_teratas_nol_kosong():
     df = pd.DataFrame({"mmsi": ["1", "2", "3"], "bendera": ["Indonesia", "Singapura", "Indonesia"]})
     assert analisis.hitung_unik(df, "bendera", 0).empty
     assert len(analisis.hitung_unik(df, "bendera")) == 2
+
+
+def test_panjang_jejak_teratas_negatif(kapal, pelabuhan):
+    d = analisis.hanya_kapal(analisis.perkaya(kapal, pelabuhan))
+    d2 = d.copy()
+    d2["waktu_snapshot"] = pd.Timestamp("2026-11-02 10:01", tz="UTC")
+    d2["lon"] += 0.1
+    assert analisis.panjang_jejak_km(pd.concat([d, d2]), teratas=-1).empty
