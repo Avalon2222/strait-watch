@@ -130,3 +130,12 @@ def test_bandingkan_seri_diurutkan_menurut_nama_selat():
              for p, n in [("chokepoint5", "Selat Malaka"), ("chokepoint15", "Selat Lombok"), ("chokepoint19", "Selat Sunda")]]
     hasil = portwatch.bandingkan(pd.DataFrame(baris), 30)
     assert hasil["selat"].tolist() == ["Selat Lombok", "Selat Malaka", "Selat Sunda"]
+
+
+@pytest.mark.parametrize("hari", [0, -5])
+def test_jendela_hari_kurang_dari_satu_ditolak(hari):
+    d = data_buatan(10)
+    with pytest.raises(ValueError):
+        portwatch.komposisi(d, "chokepoint5", hari)
+    with pytest.raises(ValueError):
+        portwatch.bandingkan(d, hari)

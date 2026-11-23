@@ -161,6 +161,8 @@ def per_tahun(df: pd.DataFrame) -> pd.DataFrame:
 
 def komposisi(df: pd.DataFrame, portid: str, hari_terakhir: int = 365) -> pd.DataFrame:
     """Porsi jenis kapal di satu selat selama N hari terakhir dalam data."""
+    if hari_terakhir < 1:
+        raise ValueError("hari_terakhir minimal 1")
     d = df[df["portid"] == portid]
     if d.empty:
         return pd.DataFrame(columns=["jenis", "kapal", "persen"])
@@ -174,6 +176,8 @@ def komposisi(df: pd.DataFrame, portid: str, hari_terakhir: int = 365) -> pd.Dat
 
 def bandingkan(df: pd.DataFrame, hari_terakhir: int = 365) -> pd.DataFrame:
     """Rata-rata transit harian dan porsi tanker setiap selat selama N hari terakhir."""
+    if hari_terakhir < 1:
+        raise ValueError("hari_terakhir minimal 1")
     if df.empty:
         return pd.DataFrame(columns=["portid", "selat", "rata_harian", "tanker_harian", "persen_tanker", "grup", "alki"])
     batas = df["tanggal"].max() - pd.Timedelta(days=hari_terakhir - 1)
