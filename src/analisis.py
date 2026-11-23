@@ -211,8 +211,12 @@ def kapal_di_sekitar(df: pd.DataFrame, lat: float, lon: float, radius_km: float)
         return df
     jarak = haversine_vektor(df["lat"].to_numpy(), df["lon"].to_numpy(), lat, lon)
     # Saring pakai jarak asli, baru dibulatkan untuk tampilan (25,04 km tidak masuk radius 25 km).
-    hasil = df[jarak <= radius_km].assign(jarak_km=np.round(jarak[jarak <= radius_km], 1))
-    return hasil.sort_values("jarak_km").drop_duplicates("mmsi")
+    dekat = jarak <= radius_km
+    hasil = df[dekat].assign(_jarak=jarak[dekat], jarak_km=np.round(jarak[dekat], 1))
+    # Urutkan dengan jarak asli (bukan yang sudah dibulatkan): dua posisi 1,24 km dan 1,16 km sama-sama
+    # "1,2 km", dan posisi yang benar-benar terdekat harus menang saat duplikat MMSI dibuang.
+    hasil = hasil.sort_values("_jarak", kind="mergesort").drop_duplicates("mmsi")
+    return hasil.drop(columns="_jarak")
 
 
 def sibuk_per_titik(df: pd.DataFrame, titik: pd.DataFrame, radius_km: float = 25.0) -> pd.DataFrame:
