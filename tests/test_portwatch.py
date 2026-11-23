@@ -122,3 +122,11 @@ def test_rapikan_kolom_jenis_hilang_diisi_nan():
     assert list(d.columns) == portwatch.KOLOM
     assert d.loc[0, "n_tanker"] == 5 and d.loc[0, "n_total"] == 9
     assert np.isnan(d.loc[0, "n_roro"]) and np.isnan(d.loc[0, "capacity"])
+
+
+def test_bandingkan_seri_diurutkan_menurut_nama_selat():
+    tanggal = pd.Timestamp("2025-01-01")
+    baris = [{"tanggal": tanggal, "portid": p, "selat": n, "n_total": 50.0, "n_tanker": 10.0}
+             for p, n in [("chokepoint5", "Selat Malaka"), ("chokepoint15", "Selat Lombok"), ("chokepoint19", "Selat Sunda")]]
+    hasil = portwatch.bandingkan(pd.DataFrame(baris), 30)
+    assert hasil["selat"].tolist() == ["Selat Lombok", "Selat Malaka", "Selat Sunda"]
