@@ -207,3 +207,17 @@ def test_panjang_jejak_teratas_negatif(kapal, pelabuhan):
     d2["waktu_snapshot"] = pd.Timestamp("2026-11-02 10:01", tz="UTC")
     d2["lon"] += 0.1
     assert analisis.panjang_jejak_km(pd.concat([d, d2]), teratas=-1).empty
+
+
+def test_kapal_di_sekitar_ambil_posisi_terdekat_sebelum_pembulatan():
+    derajat_per_km = 1 / 111.195
+    df = pd.DataFrame({
+        "mmsi": ["525000001", "525000001"],
+        "lat": [1.24 * derajat_per_km, 1.16 * derajat_per_km],
+        "lon": [104.0, 104.0],
+        "posisi": ["jauh", "dekat"],
+    })
+    hasil = analisis.kapal_di_sekitar(df, 0.0, 104.0, 25)
+    assert hasil["posisi"].tolist() == ["dekat"]
+    assert hasil["jarak_km"].tolist() == [1.2]
+    assert "_jarak" not in hasil
