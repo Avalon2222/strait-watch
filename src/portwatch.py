@@ -185,7 +185,8 @@ def bandingkan(df: pd.DataFrame, hari_terakhir: int = 365) -> pd.DataFrame:
     g["tanker_harian"] = g["tanker_harian"].round(1)
     g["grup"] = g["portid"].map(lambda p: SELAT.get(p, {}).get("grup", "-"))
     g["alki"] = g["portid"].map(lambda p: SELAT.get(p, {}).get("alki", "-"))
-    return g.sort_values("rata_harian", ascending=False).reset_index(drop=True)
+    # Selat dengan rata-rata sama diurutkan menurut nama, bukan menurut kode portid.
+    return g.sort_values(["rata_harian", "selat"], ascending=[False, True], kind="mergesort").reset_index(drop=True)
 
 
 def anomali(df: pd.DataFrame, portid: str, jendela: int = 28, ambang: float = 2.5) -> pd.DataFrame:
