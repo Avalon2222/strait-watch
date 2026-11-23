@@ -227,7 +227,8 @@ def sibuk_per_titik(df: pd.DataFrame, titik: pd.DataFrame, radius_km: float = 25
         baris.append({"nama": t["nama"], "negara": t.get("negara", ""), "kapal": int(len(sekitar)),
                       "tanker": int((sekitar.get("kategori", pd.Series(dtype=object)) == "Tanker").sum()) if not sekitar.empty else 0})
     hasil = pd.DataFrame(baris, columns=["nama", "negara", "kapal", "tanker"])
-    return hasil.sort_values("kapal", ascending=False).reset_index(drop=True)
+    # Titik dengan jumlah kapal sama diurutkan menurut nama supaya tabel tidak berubah-ubah.
+    return hasil.sort_values(["kapal", "nama"], ascending=[False, True], kind="mergesort").reset_index(drop=True)
 
 
 def panjang_jejak_km(jejak: pd.DataFrame, teratas: int = 10) -> pd.DataFrame:

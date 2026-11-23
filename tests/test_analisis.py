@@ -221,3 +221,11 @@ def test_kapal_di_sekitar_ambil_posisi_terdekat_sebelum_pembulatan():
     assert hasil["posisi"].tolist() == ["dekat"]
     assert hasil["jarak_km"].tolist() == [1.2]
     assert "_jarak" not in hasil
+
+
+def test_sibuk_per_titik_seri_diurutkan_menurut_nama():
+    nama = [f"Titik {i:02d}" for i in range(60)][::-1]
+    titik = pd.DataFrame({"nama": nama, "negara": "ID", "lat": [10.0 + i * 0.01 for i in range(60)], "lon": 120.0})
+    kapal = pd.DataFrame({"mmsi": ["525000001"], "lat": [0.0], "lon": [104.0]})
+    hasil = analisis.sibuk_per_titik(kapal, titik, 25)
+    assert hasil["nama"].tolist() == sorted(nama)
