@@ -139,3 +139,11 @@ def test_jendela_hari_kurang_dari_satu_ditolak(hari):
         portwatch.komposisi(d, "chokepoint5", hari)
     with pytest.raises(ValueError):
         portwatch.bandingkan(d, hari)
+
+
+def test_rapikan_epoch_dengan_satu_tanggal_kosong():
+    dasar = {"portid": "chokepoint5", "n_tanker": 1, "n_container": 0, "n_dry_bulk": 0, "n_general_cargo": 0,
+             "n_roro": 0, "n_total": 1, "capacity": 1, "capacity_tanker": 1}
+    epoch = int(pd.Timestamp("2025-03-01").timestamp() * 1000)
+    d = portwatch.rapikan(pd.DataFrame([{**dasar, "date": epoch}, {**dasar, "date": None}]))
+    assert d["tanggal"].dropna().tolist() == [pd.Timestamp("2025-03-01")]
