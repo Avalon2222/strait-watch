@@ -46,7 +46,8 @@ def fase_pelayaran(sog_knot, status_kode=None) -> str:
     if not pd.isna(status_kode):
         try:
             s = int(float(status_kode))
-        except (TypeError, ValueError):
+        # inf melempar OverflowError di int(); anggap kode tidak dikenal seperti teks rusak.
+        except (TypeError, ValueError, OverflowError):
             s = 15
         if s == 1:
             return "Berlabuh jangkar"

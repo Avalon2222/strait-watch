@@ -244,3 +244,9 @@ def test_panjang_jejak_seri_diurutkan_menurut_mmsi():
     for _, grup in pj.groupby("km", sort=False):
         assert list(grup["mmsi"]) == sorted(grup["mmsi"])
     assert list(pj["km"]) == sorted(pj["km"], reverse=True)
+
+
+def test_fase_pelayaran_status_tak_hingga():
+    # status inf dulu membuat int() melempar OverflowError dan seluruh tabel gagal diperkaya
+    assert analisis.fase_pelayaran(12.0, float("inf")) == "Berlayar"
+    assert analisis.fase_pelayaran(0.0, float("-inf")) == "Diam"
