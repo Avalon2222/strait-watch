@@ -98,7 +98,10 @@ def posisi_terakhir(df: pd.DataFrame, menit: float | None = None) -> pd.DataFram
     d = df
     if menit is not None:
         d = d[d["waktu_snapshot"] >= d["waktu_snapshot"].max() - pd.Timedelta(minutes=menit)]
-    return d.sort_values("waktu_snapshot").drop_duplicates("mmsi", keep="last").reset_index(drop=True)
+    # mergesort: satu snapshot bisa memuat beberapa pesan dari kapal yang sama; sort tidak stabil
+    # membuat keep="last" kadang memilih pesan yang lebih lama.
+    d = d.sort_values("waktu_snapshot", kind="mergesort")
+    return d.drop_duplicates("mmsi", keep="last").reset_index(drop=True)
 
 
 def muat_live(api_key: str, durasi: int = ais.DURASI_DEFAULT, cache_statis: dict | None = None) -> tuple[pd.DataFrame, int]:

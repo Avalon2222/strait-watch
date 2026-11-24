@@ -46,3 +46,16 @@ def test_posisi_terakhir():
     akhir = muat_data.posisi_terakhir(df).set_index("mmsi")
     assert len(akhir) == 3 and akhir.loc["1", "lat"] == 1.1
     assert set(muat_data.posisi_terakhir(df, menit=30)["mmsi"]) == {"1", "2"}
+
+
+def test_posisi_terakhir_pesan_ganda_satu_snapshot_ambil_yang_akhir():
+    import pandas as pd
+
+    t0 = pd.Timestamp("2026-01-01", tz="UTC")
+    baris = [
+        {"mmsi": str(100_000_000 + k), "waktu_snapshot": t0 + pd.Timedelta(minutes=s), "lat": float(urut), "lon": 0.0}
+        for s in range(3) for k in range(60) for urut in range(2)
+    ]
+    akhir = muat_data.posisi_terakhir(pd.DataFrame(baris))
+    assert len(akhir) == 60
+    assert (akhir["lat"] == 1.0).all()
