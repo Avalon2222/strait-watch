@@ -100,6 +100,8 @@ def urai_pesan(pesan: dict) -> tuple[str, dict] | None:
         lon = _angka(isi.get("Longitude"), _angka(meta.get("longitude")))
         if lat is None or lon is None or abs(lat) > 90 or abs(lon) > 180:
             return None
+        if lat == 0 and lon == 0:  # "Null Island": transponder belum dapat GPS, bukan posisi sungguhan
+            return None
         sog = _angka(isi.get("Sog"))
         cog = _angka(isi.get("Cog"))
         heading = _angka(isi.get("TrueHeading"))
