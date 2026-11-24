@@ -128,3 +128,12 @@ def test_waktu_meta_format_aisstream():
     assert t == pd.Timestamp("2026-11-02 17:00:01", tz="UTC")
     assert ais._waktu_meta({}) is None
     assert ais._waktu_meta({"time_utc": "bukan waktu"}) is None
+
+
+def test_urai_lat_null_pakai_metadata():
+    p = pesan_posisi(lat=1.25, lon=103.8)
+    p["Message"]["PositionReport"]["Latitude"] = None
+    p["Message"]["PositionReport"]["Longitude"] = None
+    jenis, baris = ais.urai_pesan(p)
+    assert jenis == "posisi"
+    assert (baris["lat"], baris["lon"]) == (1.25, 103.8)

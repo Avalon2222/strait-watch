@@ -95,8 +95,9 @@ def urai_pesan(pesan: dict) -> tuple[str, dict] | None:
     mmsi = str(mmsi)
 
     if tipe in ("PositionReport", "StandardClassBPositionReport"):
-        lat = _angka(isi.get("Latitude", meta.get("latitude")))
-        lon = _angka(isi.get("Longitude", meta.get("longitude")))
+        # Pesan bisa membawa "Latitude": null (kunci ada, nilainya kosong); saat itu pakai MetaData.
+        lat = _angka(isi.get("Latitude"), _angka(meta.get("latitude")))
+        lon = _angka(isi.get("Longitude"), _angka(meta.get("longitude")))
         if lat is None or lon is None or abs(lat) > 90 or abs(lon) > 180:
             return None
         sog = _angka(isi.get("Sog"))
