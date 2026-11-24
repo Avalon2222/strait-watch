@@ -114,7 +114,8 @@ def rapikan(df: pd.DataFrame) -> pd.DataFrame:
     # Field Date ArcGIS dikirim sebagai epoch milidetik; tanpa unit="ms" angka itu dibaca sebagai
     # nanodetik dan semua tanggal jatuh di 1970 (lalu terbuang oleh filter `sejak`).
     angka = pd.to_numeric(d["tanggal"], errors="coerce")
-    if angka.notna().all():
+    # Satu tanggal kosong tidak boleh membuat epoch lainnya ikut dibaca sebagai teks (lalu jatuh di 1970).
+    if angka.notna().any() and (angka.notna() | d["tanggal"].isna()).all():
         d["tanggal"] = pd.to_datetime(angka, unit="ms")
     else:
         d["tanggal"] = pd.to_datetime(d["tanggal"])
