@@ -137,3 +137,8 @@ def test_urai_lat_null_pakai_metadata():
     jenis, baris = ais.urai_pesan(p)
     assert jenis == "posisi"
     assert (baris["lat"], baris["lon"]) == (1.25, 103.8)
+
+
+def test_urai_null_island_dibuang():
+    assert ais.urai_pesan(pesan_posisi(lat=0, lon=0)) is None
+    assert ais.urai_pesan(pesan_posisi(lat=0, lon=103.9)) is not None
