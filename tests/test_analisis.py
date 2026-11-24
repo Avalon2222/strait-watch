@@ -229,3 +229,18 @@ def test_sibuk_per_titik_seri_diurutkan_menurut_nama():
     kapal = pd.DataFrame({"mmsi": ["525000001"], "lat": [0.0], "lon": [104.0]})
     hasil = analisis.sibuk_per_titik(kapal, titik, 25)
     assert hasil["nama"].tolist() == sorted(nama)
+
+
+def test_panjang_jejak_seri_diurutkan_menurut_mmsi():
+    # 200 kapal, sebagian besar diam (0 km): urutan seri dulu ikut acak dari quicksort
+    t = pd.to_datetime(["2026-11-02 10:00", "2026-11-02 10:05"], utc=True)
+    baris = []
+    for i in range(200):
+        geser = 0.01 * (i % 3 == 0)
+        for k, w in enumerate(t):
+            baris.append({"mmsi": f"{i:09d}", "waktu_snapshot": w, "lat": 1.0 + k * geser, "lon": 100.0,
+                          "label": f"Kapal {i}", "kategori": "Kargo"})
+    pj = analisis.panjang_jejak_km(pd.DataFrame(baris)[::-1], teratas=200)
+    for _, grup in pj.groupby("km", sort=False):
+        assert list(grup["mmsi"]) == sorted(grup["mmsi"])
+    assert list(pj["km"]) == sorted(pj["km"], reverse=True)
