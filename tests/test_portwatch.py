@@ -147,3 +147,13 @@ def test_rapikan_epoch_dengan_satu_tanggal_kosong():
     epoch = int(pd.Timestamp("2025-03-01").timestamp() * 1000)
     d = portwatch.rapikan(pd.DataFrame([{**dasar, "date": epoch}, {**dasar, "date": None}]))
     assert d["tanggal"].dropna().tolist() == [pd.Timestamp("2025-03-01")]
+
+
+def test_tren_melewati_tanggal_kosong():
+    df = pd.DataFrame({
+        "tanggal": pd.to_datetime(["2025-01-01", None, "2025-01-02"]),
+        "portid": "chokepoint5", "n_total": [10.0, 99.0, 20.0],
+    })
+    t = portwatch.tren(df, "chokepoint5", jendela=2)
+    assert len(t) == 2
+    assert t["rata_bergerak"].tolist() == [10.0, 15.0]

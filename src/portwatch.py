@@ -142,7 +142,8 @@ def ambil_ringkasan_tahunan() -> pd.DataFrame:
 # ------------------------------------------------------------------ analisis murni
 def tren(df: pd.DataFrame, portid: str, jendela: int = 30) -> pd.DataFrame:
     """Deret harian satu selat dengan rata-rata bergerak ``jendela`` hari."""
-    d = df[df["portid"] == portid].sort_values("tanggal").copy()
+    # Baris tanpa tanggal tidak bisa ditempatkan di deret waktu; rolling berbasis kalender menolak NaT.
+    d = df[(df["portid"] == portid) & df["tanggal"].notna()].sort_values("tanggal").copy()
     # Jendela berbasis kalender ("30D"), bukan 30 baris: bila ada hari yang bolong di data,
     # 30 baris bisa mencakup jauh lebih dari 30 hari dan rata-ratanya tidak lagi "30 hari".
     rata = d.set_index("tanggal")["n_total"].rolling(f"{jendela}D", min_periods=max(1, jendela // 2)).mean()
