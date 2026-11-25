@@ -157,3 +157,12 @@ def test_tren_melewati_tanggal_kosong():
     t = portwatch.tren(df, "chokepoint5", jendela=2)
     assert len(t) == 2
     assert t["rata_bergerak"].tolist() == [10.0, 15.0]
+
+
+def test_komposisi_mengabaikan_inf():
+    d = data_buatan(5)
+    d.loc[d.index[d["portid"] == "chokepoint5"][0], "n_tanker"] = np.inf
+    k = portwatch.komposisi(d, "chokepoint5").set_index("jenis")
+    assert (k["kapal"] >= 0).all()
+    assert k.loc["Kontainer", "kapal"] == 275
+    assert k["persen"].sum() == pytest.approx(100, abs=0.2)
