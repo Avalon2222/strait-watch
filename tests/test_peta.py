@@ -155,3 +155,11 @@ def test_popup_aman_untuk_pd_na():
     assert "KM UJI" in teks
     assert "<td>IMO</td>" not in teks
     assert "Kecepatan</td><td>- (-)" in teks
+
+
+def test_pusat_dan_zoom_mengabaikan_koordinat_inf():
+    df = pd.DataFrame({"lat": [1.0, 1.2, np.inf, 1.4], "lon": [103.0, 103.2, 103.4, -np.inf]})
+    (lat, lon), zoom = peta.pusat_dan_zoom(df)
+    assert np.isfinite(lat) and np.isfinite(lon)
+    assert 1.0 <= lat <= 1.2 and 103.0 <= lon <= 103.2
+    assert 5 <= zoom <= 11
