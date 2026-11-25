@@ -14,6 +14,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+import numpy as np
 import pandas as pd
 
 URL_HARIAN = ("https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/"
@@ -170,7 +171,8 @@ def komposisi(df: pd.DataFrame, portid: str, hari_terakhir: int = 365) -> pd.Dat
         return pd.DataFrame(columns=["jenis", "kapal", "persen"])
     batas = d["tanggal"].max() - pd.Timedelta(days=hari_terakhir - 1)
     d = d[d["tanggal"] >= batas]
-    total = d[list(KOLOM_JENIS)].sum()
+    # inf di satu sel membuat astype(int) menghasilkan angka sampah (-9223372036854775808); anggap kosong.
+    total = d[list(KOLOM_JENIS)].replace([np.inf, -np.inf], np.nan).sum()
     hasil = pd.DataFrame({"jenis": [KOLOM_JENIS[k] for k in total.index], "kapal": total.values.astype(int)})
     hasil["persen"] = (100 * hasil["kapal"] / max(int(hasil["kapal"].sum()), 1)).round(1)
     return hasil.sort_values("kapal", ascending=False).reset_index(drop=True)
