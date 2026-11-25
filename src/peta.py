@@ -6,6 +6,7 @@ import html
 import math
 
 import folium
+import numpy as np
 import pandas as pd
 from folium.plugins import HeatMap
 
@@ -223,7 +224,8 @@ def pusat_dan_zoom(df: pd.DataFrame, lebar_px: int = 900, tinggi_px: int = 560,
     """
     # Ambil hanya baris yang lat DAN lon-nya terisi; kalau lon kosong semua sementara lat ada,
     # kuantil lon jadi NaN dan math.floor(NaN) melempar ValueError.
-    lengkap = df[["lat", "lon"]].dropna() if not df.empty else df
+    # Koordinat inf (data rusak) lolos dari dropna lalu membuat kuantil dan pusat peta jadi NaN.
+    lengkap = df[["lat", "lon"]].replace([np.inf, -np.inf], np.nan).dropna() if not df.empty else df
     if lengkap.empty:
         return PUSAT_SELAT, ZOOM_AWAL
     lat, lon = lengkap["lat"], lengkap["lon"]
