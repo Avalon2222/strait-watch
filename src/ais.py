@@ -15,6 +15,7 @@ Dua jenis pesan yang dipakai:
 from __future__ import annotations
 
 import json
+import math
 import os
 import time
 from datetime import datetime, timezone
@@ -63,6 +64,17 @@ def _angka(v, default=None):
         return default if f != f else f
     except (TypeError, ValueError):
         return default
+
+
+def _bulat(v, nol_kosong: bool = False) -> int | None:
+    """Kode AIS sebagai int. Teks "70.0" diterima; inf/teks rusak jadi None, bukan menggagalkan pesan.
+
+    int(isi["Type"]) langsung melempar ValueError untuk "70.0" dan OverflowError untuk inf.
+    """
+    f = _angka(v)
+    if f is None or not math.isfinite(f) or (nol_kosong and f == 0):
+        return None
+    return int(f)
 
 
 def _bersihkan_teks(v) -> str:
@@ -128,8 +140,8 @@ def urai_pesan(pesan: dict) -> tuple[str, dict] | None:
             "mmsi": mmsi,
             "nama_statis": _bersihkan_teks(isi.get("Name") or meta.get("ShipName")),
             "callsign": _bersihkan_teks(isi.get("CallSign")),
-            "imo": int(isi["ImoNumber"]) if _angka(isi.get("ImoNumber")) else None,
-            "tipe_kode": int(isi["Type"]) if _angka(isi.get("Type")) is not None else None,
+            "imo": _bulat(isi.get("ImoNumber"), nol_kosong=True),
+            "tipe_kode": _bulat(isi.get("Type")),
             "tujuan": _bersihkan_teks(isi.get("Destination")),
             "panjang_m": panjang or None,
             "lebar_m": lebar or None,
