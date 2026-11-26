@@ -142,3 +142,14 @@ def test_urai_lat_null_pakai_metadata():
 def test_urai_null_island_dibuang():
     assert ais.urai_pesan(pesan_posisi(lat=0, lon=0)) is None
     assert ais.urai_pesan(pesan_posisi(lat=0, lon=103.9)) is not None
+
+
+def test_urai_statis_kode_teks_desimal_dan_tak_hingga():
+    p = pesan_statis(tipe="70.0")
+    p["Message"]["ShipStaticData"]["ImoNumber"] = "9123456.0"
+    _, data = ais.urai_pesan(p)
+    assert data["tipe_kode"] == 70 and data["imo"] == 9123456
+    p = pesan_statis(tipe=float("inf"))
+    p["Message"]["ShipStaticData"]["ImoNumber"] = 0
+    _, data = ais.urai_pesan(p)
+    assert data["tipe_kode"] is None and data["imo"] is None
