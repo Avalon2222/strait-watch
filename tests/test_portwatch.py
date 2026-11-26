@@ -166,3 +166,11 @@ def test_komposisi_mengabaikan_inf():
     assert (k["kapal"] >= 0).all()
     assert k.loc["Kontainer", "kapal"] == 275
     assert k["persen"].sum() == pytest.approx(100, abs=0.2)
+
+
+def test_rapikan_jumlah_tak_hingga_jadi_kosong():
+    baris = [{"date": "2025-01-01", "portid": "chokepoint5", "n_tanker": "inf", "n_total": 9},
+             {"date": "2025-01-02", "portid": "chokepoint5", "n_tanker": 4, "n_total": float("-inf")}]
+    d = portwatch.rapikan(pd.DataFrame(baris))
+    assert np.isnan(d.loc[0, "n_tanker"]) and np.isnan(d.loc[1, "n_total"])
+    assert portwatch.per_tahun(d)["rata_harian"].tolist() == [9.0]
