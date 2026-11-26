@@ -83,3 +83,8 @@ def test_perkaya_mmsi_float_dirapikan():
     assert list(d["mmsi"]) == ["525001234", ""]
     assert list(d["label"]) == ["MMSI 525001234", "Tanpa MMSI"]
     assert d.loc[0, "bendera"] == "Indonesia"
+
+
+def test_label_lokasi_koordinat_tak_hingga():
+    assert analisis.label_lokasi(np.inf, 103.8, PELABUHAN_UJI) == "Lokasi tidak diketahui"
+    assert analisis.label_lokasi(1.0, -np.inf, PELABUHAN_UJI) == "Lokasi tidak diketahui"
