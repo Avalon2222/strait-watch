@@ -126,7 +126,8 @@ def rapikan(df: pd.DataFrame) -> pd.DataFrame:
     d["selat"] = d["selat"].fillna(d["portid"])
     for k in [*KOLOM_JENIS, "n_total", "capacity", "capacity_tanker"]:
         # Respons yang tidak membawa satu kolom (mis. n_roro) jangan sampai KeyError; isi NaN.
-        d[k] = pd.to_numeric(d[k], errors="coerce") if k in d else float("nan")
+        # inf (sel rusak) juga dianggap kosong; kalau lolos, rata-rata harian & tren ikut tak hingga.
+        d[k] = pd.to_numeric(d[k], errors="coerce").replace([np.inf, -np.inf], np.nan) if k in d else float("nan")
     return d[KOLOM].sort_values(["tanggal", "portid"]).drop_duplicates(["tanggal", "portid"]).reset_index(drop=True)
 
 
