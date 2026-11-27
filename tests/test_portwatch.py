@@ -174,3 +174,14 @@ def test_rapikan_jumlah_tak_hingga_jadi_kosong():
     d = portwatch.rapikan(pd.DataFrame(baris))
     assert np.isnan(d.loc[0, "n_tanker"]) and np.isnan(d.loc[1, "n_total"])
     assert portwatch.per_tahun(d)["rata_harian"].tolist() == [9.0]
+
+
+def test_per_tahun_tanggal_kosong_tahun_tetap_bulat():
+    d = pd.DataFrame({
+        "tanggal": [pd.Timestamp("2024-01-01"), pd.NaT, pd.Timestamp("2025-01-01")],
+        "portid": "chokepoint5", "selat": "Selat Malaka", "n_total": [10.0, 99.0, 20.0],
+    })
+    hasil = portwatch.per_tahun(d)
+    assert pd.api.types.is_integer_dtype(hasil["tahun"])
+    assert hasil["tahun"].tolist() == [2024, 2025]
+    assert hasil["rata_harian"].tolist() == [10.0, 20.0]
