@@ -157,7 +157,10 @@ def per_tahun(df: pd.DataFrame) -> pd.DataFrame:
     """Rata-rata transit per hari menurut selat dan tahun (tahun berjalan ikut, ditandai jumlah hari)."""
     if df.empty:
         return pd.DataFrame(columns=["selat", "tahun", "rata_harian", "hari"])
-    d = df.assign(tahun=df["tanggal"].dt.year)
+    # Tanggal kosong (NaT) membuat kolom tahun jadi float sehingga tabel menampilkan "2024.0";
+    # baris itu toh dibuang groupby, jadi buang dulu lalu simpan tahun sebagai bilangan bulat.
+    d = df[df["tanggal"].notna()]
+    d = d.assign(tahun=d["tanggal"].dt.year.astype(int))
     g = d.groupby(["selat", "tahun"]).agg(rata_harian=("n_total", "mean"), hari=("n_total", "size")).reset_index()
     g["rata_harian"] = g["rata_harian"].round(1)
     return g
