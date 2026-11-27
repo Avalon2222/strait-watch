@@ -120,6 +120,8 @@ def rapikan(df: pd.DataFrame) -> pd.DataFrame:
         d["tanggal"] = pd.to_datetime(angka, unit="ms")
     else:
         d["tanggal"] = pd.to_datetime(d["tanggal"])
+    # portid berspasi (" chokepoint5") tidak cocok dengan kamus SELAT dan tidak lolos filter tren/komposisi.
+    d["portid"] = d["portid"].map(lambda p: p.strip() if isinstance(p, str) else p)
     d["selat"] = d["portid"].map(lambda p: SELAT.get(p, {}).get("nama"))
     if "portname" in d:  # respons tanpa portname: fillna(None) akan melempar ValueError
         d["selat"] = d["selat"].fillna(d["portname"])

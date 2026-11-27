@@ -196,3 +196,14 @@ def test_jendela_tidak_masuk_akal_ditolak(fungsi, jendela):
     })
     with pytest.raises(ValueError, match="jendela minimal"):
         getattr(portwatch, fungsi)(d, "chokepoint5", jendela)
+
+
+def test_rapikan_portid_berspasi():
+    mentah = pd.DataFrame({
+        "date": [1704067200000, 1704153600000], "portid": [" chokepoint5 ", "chokepoint5"],
+        "portname": ["Malacca Strait", "Malacca Strait"], "n_total": [100, 110],
+    })
+    d = portwatch.rapikan(mentah)
+    assert d["portid"].tolist() == ["chokepoint5", "chokepoint5"]
+    assert d["selat"].tolist() == ["Selat Malaka", "Selat Malaka"]
+    assert len(portwatch.tren(d, "chokepoint5", 1)) == 2
