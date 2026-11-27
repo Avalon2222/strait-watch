@@ -185,3 +185,14 @@ def test_per_tahun_tanggal_kosong_tahun_tetap_bulat():
     assert pd.api.types.is_integer_dtype(hasil["tahun"])
     assert hasil["tahun"].tolist() == [2024, 2025]
     assert hasil["rata_harian"].tolist() == [10.0, 20.0]
+
+
+@pytest.mark.parametrize("fungsi", ["tren", "anomali"])
+@pytest.mark.parametrize("jendela", [0, -3])
+def test_jendela_tidak_masuk_akal_ditolak(fungsi, jendela):
+    d = pd.DataFrame({
+        "tanggal": pd.date_range("2024-01-01", periods=40), "portid": "chokepoint5",
+        "selat": "Selat Malaka", "n_total": np.arange(40.0), "n_tanker": 1.0,
+    })
+    with pytest.raises(ValueError, match="jendela minimal"):
+        getattr(portwatch, fungsi)(d, "chokepoint5", jendela)

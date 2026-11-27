@@ -144,6 +144,9 @@ def ambil_ringkasan_tahunan() -> pd.DataFrame:
 # ------------------------------------------------------------------ analisis murni
 def tren(df: pd.DataFrame, portid: str, jendela: int = 30) -> pd.DataFrame:
     """Deret harian satu selat dengan rata-rata bergerak ``jendela`` hari."""
+    # Jendela 0 diam-diam menghasilkan "rata-rata" yang sama dengan nilai harian itu sendiri.
+    if jendela < 1:
+        raise ValueError("jendela minimal 1 hari")
     # Baris tanpa tanggal tidak bisa ditempatkan di deret waktu; rolling berbasis kalender menolak NaT.
     d = df[(df["portid"] == portid) & df["tanggal"].notna()].sort_values("tanggal").copy()
     # Jendela berbasis kalender ("30D"), bukan 30 baris: bila ada hari yang bolong di data,
@@ -203,6 +206,9 @@ def bandingkan(df: pd.DataFrame, hari_terakhir: int = 365) -> pd.DataFrame:
 
 def anomali(df: pd.DataFrame, portid: str, jendela: int = 28, ambang: float = 2.5) -> pd.DataFrame:
     """Hari yang jumlah transitnya menyimpang jauh dari kebiasaan (z-score terhadap 28 hari sebelumnya)."""
+    # Jendela 0 tidak punya acuan sama sekali, negatif membuat rolling melempar pesan yang membingungkan.
+    if jendela < 2:
+        raise ValueError("jendela minimal 2 hari")
     d = df[df["portid"] == portid].sort_values("tanggal").copy()
     if len(d) < jendela + 1:
         return d.iloc[0:0].assign(z=pd.Series(dtype=float))
