@@ -30,6 +30,9 @@ def muat_pelabuhan(path: Path = FILE_PELABUHAN) -> pd.DataFrame:
     hilang = wajib - set(df.columns)
     if hilang:
         raise ValueError(f"Kolom pelabuhan hilang: {sorted(hilang)}")
+    # Koordinat berupa teks ("-") lolos dropna lalu membuat float() di pelabuhan_terdekat gagal
+    # untuk semua kapal; jadikan angka dulu supaya baris rusak ikut terbuang.
+    df = df.assign(lat=pd.to_numeric(df["lat"], errors="coerce"), lon=pd.to_numeric(df["lon"], errors="coerce"))
     return df.dropna(subset=["lat", "lon"]).reset_index(drop=True)
 
 
