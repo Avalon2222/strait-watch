@@ -48,7 +48,11 @@ def muat_sampel(path: Path = FILE_SAMPEL, path_statis: Path = FILE_SAMPEL_STATIS
         raise ValueError(f"Kolom sampel hilang: {sorted(hilang)}")
     df["mmsi"] = df["mmsi"].astype(str).str.strip()
     df["nama"] = df["nama"].fillna("").astype(str).str.strip()
-    df["waktu_snapshot"] = pd.to_datetime(df["waktu_snapshot"], utc=True)
+    # Satu waktu snapshot yang rusak dulu menggagalkan seluruh sampel; baris itu saja yang dibuang.
+    df["waktu_snapshot"] = pd.to_datetime(df["waktu_snapshot"], utc=True, errors="coerce")
+    for k in ("lat", "lon"):
+        df[k] = pd.to_numeric(df[k], errors="coerce")
+    df = df.dropna(subset=["waktu_snapshot"])
     if "waktu_pesan" in df:
         df["waktu_pesan"] = pd.to_datetime(df["waktu_pesan"], utc=True, errors="coerce")
     for k in ("heading", "status_nav_kode"):

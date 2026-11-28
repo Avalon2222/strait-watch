@@ -72,3 +72,16 @@ def test_muat_pelabuhan_koordinat_teks_rusak_dibuang(tmp_path):
     p = muat_data.muat_pelabuhan(path)
     assert p["kode"].tolist() == ["PKG", "BLW"]
     assert p["lat"].dtype.kind == "f"
+
+
+def test_muat_sampel_waktu_snapshot_rusak_dibuang(tmp_path):
+    path = tmp_path / "posisi.csv"
+    path.write_text(
+        "mmsi,nama,lat,lon,sog_knot,cog,waktu_snapshot\n"
+        "525019001,KM A,1.2,103.9,10,100,2026-11-02T17:00:00Z\n"
+        "525019002,KM B,1.3,103.8,10,100,kapan\n"
+        "525019003,KM C,x,103.7,10,100,2026-11-02T17:00:00Z\n"
+    )
+    df = muat_data.muat_sampel(path, path_statis=None)
+    assert df["mmsi"].tolist() == ["525019001"]
+    assert str(df["waktu_snapshot"].dt.tz) == "UTC"
