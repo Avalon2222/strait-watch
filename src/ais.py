@@ -122,9 +122,10 @@ def urai_pesan(pesan: dict) -> tuple[str, dict] | None:
             "nama": _bersihkan_teks(meta.get("ShipName")),
             "lat": lat,
             "lon": lon,
-            "sog_knot": None if sog is None or sog >= 102.3 else sog,
-            "cog": None if cog is None or cog >= 360 else cog,
-            "heading": None if heading is None or heading >= 360 else heading,
+            # Nilai negatif tidak ada dalam standar AIS (SOG 0-102,2; COG/heading 0-359,9): data rusak.
+            "sog_knot": None if sog is None or not 0 <= sog < 102.3 else sog,
+            "cog": None if cog is None or not 0 <= cog < 360 else cog,
+            "heading": None if heading is None or not 0 <= heading < 360 else heading,
             "status_nav_kode": None if tipe != "PositionReport" else _angka(isi.get("NavigationalStatus")),
             "kelas": "A" if tipe == "PositionReport" else "B",
             "waktu_pesan": _waktu_meta(meta),
