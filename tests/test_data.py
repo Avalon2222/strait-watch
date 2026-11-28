@@ -59,3 +59,16 @@ def test_posisi_terakhir_pesan_ganda_satu_snapshot_ambil_yang_akhir():
     akhir = muat_data.posisi_terakhir(pd.DataFrame(baris))
     assert len(akhir) == 60
     assert (akhir["lat"] == 1.0).all()
+
+
+def test_muat_pelabuhan_koordinat_teks_rusak_dibuang(tmp_path):
+    path = tmp_path / "pelabuhan.csv"
+    path.write_text(
+        "kode,nama,kota,negara,jenis,lat,lon\n"
+        "PKG,Port Klang,Klang,MY,pelabuhan,3.0,101.4\n"
+        "XXX,Rusak,?,ID,pelabuhan,-,101.0\n"
+        "BLW,Belawan,Medan,ID,pelabuhan,3.78,98.69\n"
+    )
+    p = muat_data.muat_pelabuhan(path)
+    assert p["kode"].tolist() == ["PKG", "BLW"]
+    assert p["lat"].dtype.kind == "f"
