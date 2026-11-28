@@ -153,3 +153,11 @@ def test_urai_statis_kode_teks_desimal_dan_tak_hingga():
     p["Message"]["ShipStaticData"]["ImoNumber"] = 0
     _, data = ais.urai_pesan(p)
     assert data["tipe_kode"] is None and data["imo"] is None
+
+
+def test_urai_posisi_nilai_negatif_dianggap_kosong():
+    jenis, b = ais.urai_pesan(pesan_posisi(sog=-1.0, cog=-5.0, heading=-10))
+    assert jenis == "posisi"
+    assert b["sog_knot"] is None and b["cog"] is None and b["heading"] is None
+    _, normal = ais.urai_pesan(pesan_posisi(sog=0.0, cog=0.0, heading=0))
+    assert normal["sog_knot"] == 0.0 and normal["cog"] == 0.0 and normal["heading"] == 0
